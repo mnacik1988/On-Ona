@@ -1,0 +1,29 @@
+{
+  "name": "Дуэт — игра для двоих",
+  "short_name": "Дуэт",
+  "description": "Дуэт — парная игра для двоих на одном телефоне: узнавайте друг друга лучше и отвечайте на вопросы вместе",
+  "id": "/On-Ona/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["entertainment", "lifestyle", "games"],
+  "background_color": "#FFEFF4",
+  "theme_color": "#FFEFF4",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

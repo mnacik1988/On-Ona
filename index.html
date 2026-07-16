@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Дуэт">
+<meta name="theme-color" content="#FFEFF4">
+<title>Дуэт — игра для двоих</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #3D2C52;
+    --muted: #9A8FB0;
+    --rose: #FF5C8A;
+    --rose-deep: #F03E72;
+    --rose-soft: #FFE3EC;
+    --violet: #7C5CFC;
+    --violet-deep: #6647E8;
+    --violet-soft: #EAE4FF;
+    --amber: #FFB020;
+    --green: #3DC97A;
+    --green-soft: #E0F7EA;
+    --red: #FF5D5D;
+    --red-soft: #FFE5E5;
+    --card: #FFFFFF;
+    --radius: 24px;
+    --shadow: 0 8px 24px rgba(101, 69, 151, .10);
+    --font-body: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-display: 'Baloo 2', 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --ease-soft: cubic-bezier(.34, 1.56, .64, 1);
+    --ease-smooth: cubic-bezier(.16, 1, .3, 1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: linear-gradient(180deg, #FFF0F5 0%, #F4EFFF 60%, #EEF3FF 100%) fixed;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-weight: 600;
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+  main {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: calc(16px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom));
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- декор фона ---------- */
+  .bg-decor { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .bg-decor span {
+    position: absolute; font-size: 22px; opacity: .12;
+    animation: drift 12s ease-in-out infinite alternate;
+  }
+  @keyframes drift { from { transform: translateY(0) rotate(-8deg); } to { transform: translateY(-24px) rotate(8deg); } }
+
+  /* ---------- экраны ---------- */
+  .screen { display: none; position: relative; z-index: 1; }
+  .screen.active { display: flex; flex-direction: column; flex: 1 1 auto; animation: pop .5s var(--ease-smooth); }
+  @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+  .game-body { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+  .turn-avatar { display: flex; justify-content: center; margin: 16px 0 6px; }
+  .turn-avatar svg { animation: float 3s ease-in-out infinite; }
+  .turn-avatar.react-happy svg { animation: hop .8s var(--ease-soft); }
+  @keyframes hop {
+    0%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-22px) scale(1.06); }
+    60% { transform: translateY(0); }
+    75% { transform: translateY(-8px); }
+  }
+  .turn-avatar.react-sad svg { animation: sadShake .8s ease; }
+  @keyframes sadShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-7px) rotate(-3deg); }
+    45% { transform: translateX(6px) rotate(2deg); }
+    70% { transform: translateX(-4px) rotate(-1deg); }
+  }
+
+  h1 { font-family: var(--font-display); font-size: 42px; font-weight: 700; letter-spacing: -.5px; text-align: center; }
+  .tagline { text-align: center; color: var(--muted); font-size: 16px; margin-top: 6px; line-height: 1.4; }
+
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px; margin-top: 16px;
+  }
+
+  /* ---------- кнопки ---------- */
+  .btn {
+    display: block; width: 100%; border: none; cursor: pointer;
+    border-radius: 999px; padding: 17px 24px;
+    font-size: 18px; font-weight: 600; font-family: var(--font-display);
+    color: #fff; text-align: center;
+    background: linear-gradient(90deg, var(--rose) 0%, var(--violet) 100%);
+    box-shadow: 0 10px 22px rgba(148, 82, 216, .32);
+    transition: transform .22s var(--ease-soft), box-shadow .22s var(--ease-smooth);
+    margin-top: 18px;
+  }
+  .btn:active { transform: scale(.97); box-shadow: 0 4px 12px rgba(148, 82, 216, .25); }
+  .btn.secondary {
+    background: #fff; color: var(--ink);
+    box-shadow: 0 6px 16px rgba(101, 69, 151, .10);
+  }
+  .btn:disabled { opacity: .45; box-shadow: none; }
+
+  .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; min-height: 44px; }
+  .icon-btn {
+    width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer;
+    background: #fff; box-shadow: var(--shadow);
+    font-size: 18px; color: var(--ink); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s var(--ease-soft);
+  }
+  .icon-btn:active { transform: scale(.9); }
+  .topbar .title { font-family: var(--font-display); font-size: 19px; font-weight: 600; }
+  .spacer { flex: 1; }
+
+  /* ---------- маскоты ---------- */
+  .mascots { display: flex; justify-content: center; align-items: flex-end; gap: 4px; position: relative; margin: 18px 0 8px; }
+  .mascots svg { display: block; }
+  .m1 { animation: float 3s ease-in-out infinite; }
+  .m2 { animation: float 3s ease-in-out .6s infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  .mascots .hearts { position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 20px; animation: pulseH 1.6s ease-in-out infinite; }
+  @keyframes pulseH { 0%,100% { transform: translateX(-50%) scale(1); opacity: .9; } 50% { transform: translateX(-50%) scale(1.25); opacity: 1; } }
+
+  /* ---------- онбординг ---------- */
+  .player-card { border-left: none; position: relative; }
+  .player-card .pc-label { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; }
+  .player-card.rose .pc-label { color: var(--rose); }
+  .player-card.violet .pc-label { color: var(--violet); }
+  .emoji-row { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .emoji-row button {
+    width: 44px; height: 44px; border-radius: 14px; border: 2px solid transparent;
+    background: #F6F2FB; font-size: 22px; cursor: pointer; transition: all .22s var(--ease-soft);
+  }
+  .player-card.rose .emoji-row button.sel { border-color: var(--rose); background: var(--rose-soft); transform: scale(1.08); }
+  .player-card.violet .emoji-row button.sel { border-color: var(--violet); background: var(--violet-soft); transform: scale(1.08); }
+  .name-input {
+    width: 100%; border: 2px solid #EFE9F8; border-radius: 16px;
+    padding: 14px 16px; font-size: 17px; font-family: inherit; color: var(--ink);
+    background: #FBF9FE; outline: none;
+  }
+  .player-card.rose .name-input:focus { border-color: var(--rose); }
+  .player-card.violet .name-input:focus { border-color: var(--violet); }
+
+  /* ---------- главная ---------- */
+  .pair-chip {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 17px; font-weight: 800; flex-wrap: wrap;
+  }
+  .pair-chip .amp { color: var(--rose); }
+  .score-banner {
+    background: linear-gradient(120deg, var(--rose) 0%, var(--violet) 100%);
+    border-radius: var(--radius); color: #fff; padding: 22px;
+    margin-top: 16px; box-shadow: 0 12px 28px rgba(148, 82, 216, .35);
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .score-banner .sb-label { font-size: 13px; font-weight: 700; opacity: .85; text-transform: uppercase; letter-spacing: 1px; }
+  .score-banner .sb-value { font-family: var(--font-display); font-size: 44px; font-weight: 600; line-height: 1.1; }
+  .score-banner .sb-sub { font-size: 13px; opacity: .85; margin-top: 4px; }
+  .mode-card {
+    display: flex; align-items: center; gap: 14px; cursor: pointer;
+    transition: transform .22s var(--ease-soft);
+  }
+  .mode-card:active { transform: scale(.98); }
+  .mode-icon {
+    width: 56px; height: 56px; border-radius: 18px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .mode-card h3 { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+  .mode-card p { font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.35; }
+  .mode-card .badge { font-size: 12px; font-weight: 700; color: var(--violet); margin-top: 5px; }
+  .mode-card .arrow { margin-left: auto; color: #D8CFEA; font-size: 20px; flex-shrink: 0; }
+  .footer-note { text-align: center; color: #C4B8DC; font-size: 13px; margin-top: 26px; }
+
+  /* ---------- настройка игры ---------- */
+  .opt-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  .opt {
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
+    background: #fff; border: 2px solid transparent; border-radius: 18px;
+    padding: 14px 16px; box-shadow: var(--shadow); transition: all .22s var(--ease-soft);
+  }
+  .opt .o-emoji { font-size: 24px; }
+  .opt .o-name { font-weight: 800; font-size: 16px; }
+  .opt .o-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .opt.sel { border-color: var(--violet); background: var(--violet-soft); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip {
+    border: 2px solid transparent; background: #fff; border-radius: 999px;
+    padding: 10px 16px; font-size: 15px; font-weight: 700; font-family: inherit;
+    color: var(--ink); cursor: pointer; box-shadow: var(--shadow); transition: all .22s var(--ease-soft);
+  }
+  .chip.sel { border-color: var(--violet); background: var(--violet-soft); color: var(--violet-deep); }
+  .setup-note { text-align: center; color: var(--muted); font-size: 13.5px; margin-top: 16px; line-height: 1.5; }
+
+  /* ---------- игровые экраны ---------- */
+  .game-top { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .progress-wrap { flex: 1; }
+  .progress-label { font-size: 12.5px; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+  .progress-bar { height: 8px; background: rgba(124, 92, 252, .15); border-radius: 99px; overflow: hidden; }
+  .progress-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--rose), var(--violet)); transition: width .5s var(--ease-smooth); }
+  .score-pill {
+    background: #fff; border-radius: 999px; padding: 8px 14px;
+    font-weight: 800; font-size: 15px; box-shadow: var(--shadow); white-space: nowrap;
+  }
+  .turn-banner {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border-radius: 18px; padding: 12px 16px; margin-top: 14px;
+    font-weight: 800; font-size: 16px;
+  }
+  .turn-banner.rose { background: var(--rose-soft); color: var(--rose-deep); }
+  .turn-banner.violet { background: var(--violet-soft); color: var(--violet-deep); }
+  .q-card { text-align: center; padding: 28px 22px; }
+  .q-label { font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .q-text { font-family: var(--font-display); font-size: 22px; font-weight: 600; line-height: 1.35; margin-top: 12px; }
+  .q-hint { font-size: 13.5px; color: var(--muted); margin-top: 14px; line-height: 1.45; }
+  .judge-row { display: flex; gap: 12px; margin-top: 18px; }
+  .judge-row button {
+    flex: 1; border: none; border-radius: 20px; padding: 18px 10px;
+    font-size: 17px; font-weight: 800; font-family: inherit; cursor: pointer;
+    transition: transform .22s var(--ease-soft);
+  }
+  .judge-row button:active { transform: scale(.96); }
+  .j-yes { background: var(--green); color: #fff; box-shadow: 0 8px 18px rgba(61, 201, 122, .35); }
+  .j-no { background: #fff; color: var(--red); box-shadow: var(--shadow); }
+
+  /* викторина */
+  .bonus-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(90deg, #FF8A3D, #FF5C8A); color: #fff;
+    font-weight: 800; font-size: 13px; border-radius: 999px; padding: 6px 14px;
+    animation: bonusPulse 1s ease-in-out infinite;
+  }
+  @keyframes bonusPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  .timer-bar { height: 10px; background: rgba(255, 138, 61, .18); border-radius: 99px; overflow: hidden; margin-top: 12px; }
+  .timer-bar i { display: block; height: 100%; width: 100%; border-radius: 99px; background: linear-gradient(90deg, #FF8A3D, #FF5C8A); }
+  .answers { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .ans {
+    border: 2px solid transparent; background: #fff; border-radius: 18px;
+    padding: 15px 18px; font-size: 16px; font-weight: 700; font-family: inherit;
+    color: var(--ink); cursor: pointer; text-align: left; box-shadow: var(--shadow);
+    transition: all .22s var(--ease-soft); width: 100%;
+  }
+  .ans:active { transform: scale(.98); }
+  .ans.correct { background: var(--green-soft); border-color: var(--green); color: #1E8A4E; }
+  .ans.wrong { background: var(--red-soft); border-color: var(--red); color: #C43B3B; }
+  .ans.dim { opacity: .55; }
+  .ans:disabled { cursor: default; }
+  .verdict { text-align: center; font-weight: 800; font-size: 17px; margin-top: 16px; min-height: 24px; }
+
+  /* ---------- результаты ---------- */
+  .result-hero { text-align: center; padding: 30px 22px; }
+  .result-hero .r-emoji { font-size: 64px; line-height: 1; }
+  .result-hero .r-title { font-family: var(--font-display); font-size: 24px; font-weight: 600; margin-top: 14px; }
+  .result-hero .r-sub { color: var(--muted); font-size: 15px; margin-top: 8px; line-height: 1.45; }
+  .result-hero .r-score { font-family: var(--font-display); font-size: 40px; font-weight: 600; margin-top: 14px; background: linear-gradient(90deg, var(--rose), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .stat-rows { margin-top: 14px; }
+  .stat-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff; border-radius: 16px; padding: 13px 16px; margin-top: 8px;
+    box-shadow: var(--shadow); font-size: 15px; font-weight: 700;
+  }
+  .stat-row .sr-val { font-weight: 800; }
+  .record-flash { text-align: center; color: var(--amber); font-weight: 800; font-size: 15px; margin-top: 12px; }
+
+  /* «Кто из вас?» */
+  .who-card { text-align: center; padding: 40px 24px; min-height: 260px; display: flex; flex-direction: column; justify-content: center; }
+  .who-label { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--rose); }
+  .who-text { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.35; margin-top: 14px; }
+  .who-hint { font-size: 14px; color: var(--muted); margin-top: 18px; }
+  .who-count { text-align: center; font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 14px; }
+
+  /* очки-всплывашка и конфетти */
+  .float-pts {
+    position: fixed; z-index: 60; font-size: 26px; font-weight: 800; pointer-events: none;
+    color: var(--green); animation: floatUp 1.1s var(--ease-smooth) forwards;
+  }
+  @keyframes floatUp { from { opacity: 1; transform: translateY(0) scale(.9); } to { opacity: 0; transform: translateY(-70px) scale(1.05); } }
+  .conf { position: fixed; top: -8vh; z-index: 55; pointer-events: none; animation: confFall cubic-bezier(.55,0,1,.45) forwards; }
+  @keyframes confFall { to { transform: translateY(118vh) rotate(420deg); } }
+
+  .link-btn { background: none; border: none; color: var(--violet); font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; display: block; margin: 18px auto 0; }
+</style>
+</head>
+<body>
+<div class="bg-decor" id="bgDecor"></div>
+<main>
+
+  <!-- ============ ОНБОРДИНГ ============ -->
+  <section id="scr-onboard" class="screen">
+    <div class="mascots">
+      <div class="m1" id="mascot1"></div>
+      <div class="hearts">💞</div>
+      <div class="m2" id="mascot2"></div>
+    </div>
+    <h1>Дуэт</h1>
+    <p class="tagline">Игра для двоих на одном телефоне.<br>Узнайте друг друга ещё ближе!</p>
+
+    <div class="card player-card rose">
+      <div class="pc-label">Игрок 1</div>
+      <div class="emoji-row" id="emojiRow1"></div>
+      <input class="name-input" id="name1" type="text" maxlength="14" placeholder="Имя" autocomplete="off">
+    </div>
+
+    <div class="card player-card violet">
+      <div class="pc-label">Игрок 2</div>
+      <div class="emoji-row" id="emojiRow2"></div>
+      <input class="name-input" id="name2" type="text" maxlength="14" placeholder="Имя" autocomplete="off">
+    </div>
+
+    <button class="btn" onclick="savePair()">Погнали! 💫</button>
+  </section>
+
+  <!-- ============ ГЛАВНАЯ ============ -->
+  <section id="scr-home" class="screen">
+    <div class="mascots" style="margin-top:4px">
+      <div class="m1" id="mascot1h"></div>
+      <div class="hearts">💞</div>
+      <div class="m2" id="mascot2h"></div>
+    </div>
+    <div class="pair-chip" id="pairChip"></div>
+
+    <div class="score-banner">
+      <div class="sb-label">Очки пары</div>
+      <div class="sb-value" id="homeScore">0</div>
+      <div class="sb-sub" id="homeGames">игр сыграно: 0</div>
+    </div>
+
+    <div class="card mode-card" onclick="goKmSetup()">
+      <div class="mode-icon" style="background:var(--rose-soft)">💗</div>
+      <div>
+        <h3>Узнай меня</h3>
+        <p>Вопросы друг о друге по очереди. Проверьте, как хорошо вы знакомы!</p>
+        <div class="badge" id="kmBestBadge" style="display:none"></div>
+      </div>
+      <div class="arrow">›</div>
+    </div>
+
+    <div class="card mode-card" onclick="goQuizSetup()">
+      <div class="mode-icon" style="background:var(--violet-soft)">🏆</div>
+      <div>
+        <h3>Викторина вдвоём</h3>
+        <p>Отвечайте вместе! 4 варианта ответа и огненные бонус-раунды ×2 🔥</p>
+        <div class="badge" id="quizBestBadge" style="display:none"></div>
+      </div>
+      <div class="arrow">›</div>
+    </div>
+
+    <div class="card mode-card" onclick="startWho()">
+      <div class="mode-icon" style="background:#FFF3DE">👉</div>
+      <div>
+        <h3>Кто из вас?</h3>
+        <p>Весёлые вопросы без правильных ответов — просто показывайте друг на друга!</p>
+      </div>
+      <div class="arrow">›</div>
+    </div>
+
+    <button class="link-btn" onclick="editPair()">✏️ Изменить имена</button>
+    <p class="footer-note">Сделано с 💜 для двоих</p>
+  </section>
+
+  <!-- ============ УЗНАЙ МЕНЯ: НАСТРОЙКА ============ -->
+  <section id="scr-km-setup" class="screen">
+    <div class="topbar">
+      <button class="icon-btn" onclick="show('scr-home')">←</button>
+      <div class="title">💗 Узнай меня</div>
+    </div>
+
+    <div class="q-label" style="margin-top:14px">Выберите сложность</div>
+    <div class="opt-list" id="kmDiffList"></div>
+
+    <p class="setup-note">10 раундов — по 5 вопросов каждому.<br>Отвечаете вслух, а половинка честно оценивает 😉</p>
+    <button class="btn" onclick="startKm()">Начать игру</button>
+  </section>
+
+  <!-- ============ УЗНАЙ МЕНЯ: ИГРА ============ -->
+  <section id="scr-km-game" class="screen">
+    <div class="game-top">
+      <button class="icon-btn" onclick="quitGame()">✕</button>
+      <div class="progress-wrap">
+        <div class="progress-label" id="kmRound">Раунд 1/10</div>
+        <div class="progress-bar"><i id="kmProgress" style="width:10%"></i></div>
+      </div>
+      <div class="score-pill" id="kmScore">⭐ 0</div>
+    </div>
+
+    <div class="game-body">
+      <div class="turn-banner rose" id="kmTurn"></div>
+      <div class="turn-avatar" id="kmAvatar"></div>
+
+      <div class="card q-card">
+        <div class="q-label" id="kmPts">+100 очков</div>
+        <div class="q-text" id="kmQuestion"></div>
+        <div class="q-hint">Отвечай вслух — не подглядывай! 🙈</div>
+      </div>
+
+      <div class="judge-row">
+        <button class="j-no" onclick="kmJudge(false)">✗ Мимо</button>
+        <button class="j-yes" onclick="kmJudge(true)">✓ Верно!</button>
+      </div>
+      <p class="setup-note" id="kmJudgeHint"></p>
+    </div>
+  </section>
+
+  <!-- ============ УЗНАЙ МЕНЯ: РЕЗУЛЬТАТ ============ -->
+  <section id="scr-km-result" class="screen">
+    <div class="card result-hero">
+      <div class="r-emoji" id="kmrEmoji">🔮</div>
+      <div class="r-title" id="kmrTitle"></div>
+      <div class="r-sub" id="kmrSub"></div>
+      <div class="r-score" id="kmrScore"></div>
+    </div>
+    <div class="stat-rows" id="kmrRows"></div>
+    <button class="btn" onclick="goKmSetup()">Сыграть ещё 💗</button>
+    <button class="btn secondary" onclick="goHome()">На главную</button>
+  </section>
+
+  <!-- ============ ВИКТОРИНА: НАСТРОЙКА ============ -->
+  <section id="scr-quiz-setup" class="screen">
+    <div class="topbar">
+      <button class="icon-btn" onclick="show('scr-home')">←</button>
+      <div class="title">🏆 Викторина вдвоём</div>
+    </div>
+
+    <div class="q-label" style="margin-top:14px">Выберите тему</div>
+    <div class="chips" id="quizTopics"></div>
+
+    <p class="setup-note">Отвечайте вместе и зарабатывайте очки!<br>+100 за верный ответ · 🔥 бонус-вопрос с таймером даёт ×2</p>
+    <button class="btn" onclick="startQuiz()">Начать игру</button>
+  </section>
+
+  <!-- ============ ВИКТОРИНА: ИГРА ============ -->
+  <section id="scr-quiz-game" class="screen">
+    <div class="game-top">
+      <button class="icon-btn" onclick="quitGame()">✕</button>
+      <div class="progress-wrap">
+        <div class="progress-label" id="qzRound">Вопрос 1/10</div>
+        <div class="progress-bar"><i id="qzProgress" style="width:10%"></i></div>
+      </div>
+      <div class="score-pill" id="qzScore">⭐ 0</div>
+    </div>
+
+    <div class="game-body">
+      <div class="card q-card" style="padding-top:22px">
+        <div id="qzBonusWrap" style="display:none">
+          <span class="bonus-tag">🔥 БОНУС ×2 — успейте за 15 секунд!</span>
+          <div class="timer-bar"><i id="qzTimerFill"></i></div>
+        </div>
+        <div class="q-text" id="qzQuestion" style="margin-top:14px"></div>
+      </div>
+
+      <div class="answers" id="qzAnswers"></div>
+      <div class="verdict" id="qzVerdict"></div>
+      <button class="btn" id="qzNextBtn" style="display:none" onclick="quizNext()">Дальше →</button>
+    </div>
+  </section>
+
+  <!-- ============ ВИКТОРИНА: РЕЗУЛЬТАТ ============ -->
+  <section id="scr-quiz-result" class="screen">
+    <div class="card result-hero">
+      <div class="r-emoji" id="qzrEmoji">🏆</div>
+      <div class="r-title" id="qzrTitle"></div>
+      <div class="r-sub" id="qzrSub"></div>
+      <div class="r-score" id="qzrScore"></div>
+    </div>
+    <div class="record-flash" id="qzrRecord" style="display:none">🎉 Новый рекорд пары!</div>
+    <button class="btn" onclick="goQuizSetup()">Сыграть ещё 🏆</button>
+    <button class="btn secondary" onclick="goHome()">На главную</button>
+  </section>
+
+  <!-- ============ КТО ИЗ ВАС? ============ -->
+  <section id="scr-who" class="screen">
+    <div class="topbar">
+      <button class="icon-btn" onclick="show('scr-home')">←</button>
+      <div class="title">👉 Кто из вас?</div>
+    </div>
+
+    <div class="card who-card" id="whoCard">
+      <div class="who-label">Кто из вас скорее…</div>
+      <div class="who-text" id="whoText"></div>
+      <div class="who-hint">На счёт «три» покажите пальцем друг на друга! 👉👈</div>
+    </div>
+    <div class="who-count" id="whoCount"></div>
+    <button class="btn" id="whoNextBtn" onclick="whoNext()">Дальше →</button>
+  </section>
+
+</main>
+
+<script>
+/* =================== ДАННЫЕ =================== */
+
+const EMOJIS = ['🦊','🐰','🐻','🐱','🦁','🐼','🐨','🐸'];
+
+/* «Узнай меня»: d — сложность (1 лёгкая / 2 средняя / 3 сложная) */
+const KM_Q = [
+  // Лёгкие
+  {d:1, t:'Какой любимый цвет у твоей половинки?'},
+  {d:1, t:'Какое любимое блюдо у твоей половинки?'},
+  {d:1, t:'Какой любимый напиток у твоей половинки?'},
+  {d:1, t:'Какое время года твоя половинка любит больше всего?'},
+  {d:1, t:'Когда у твоей половинки день рождения — число и месяц?'},
+  {d:1, t:'Какой знак зодиака у твоей половинки?'},
+  {d:1, t:'Какой любимый фильм или сериал у твоей половинки?'},
+  {d:1, t:'Какую музыку твоя половинка слушает чаще всего?'},
+  {d:1, t:'Что твоя половинка любит больше: сладкое или солёное?'},
+  {d:1, t:'Что твоя половинка выберет: кофе или чай?'},
+  {d:1, t:'Твоя половинка — сова или жаворонок?'},
+  {d:1, t:'Какой размер обуви у твоей половинки?'},
+  {d:1, t:'Какой любимый праздник у твоей половинки?'},
+  {d:1, t:'В каком городе родилась твоя половинка?'},
+  {d:1, t:'Какую пиццу закажет твоя половинка?'},
+  {d:1, t:'Не подглядывая: какого цвета глаза у твоей половинки?'},
+  {d:1, t:'Не подглядывая: что сегодня надето на твоей половинке?'},
+  {d:1, t:'Какое мороженое выберет твоя половинка?'},
+  {d:1, t:'Какой любимый эмодзи у твоей половинки?'},
+  {d:1, t:'Что твоя половинка любит больше: море или горы?'},
+  // Средние
+  {d:2, t:'Какой школьный предмет твоя половинка любила больше всего?'},
+  {d:2, t:'Как звали первого питомца твоей половинки?'},
+  {d:2, t:'Кем твоя половинка мечтала стать в детстве?'},
+  {d:2, t:'Какой была первая работа твоей половинки?'},
+  {d:2, t:'В какую страну мечтает поехать твоя половинка?'},
+  {d:2, t:'Чего твоя половинка боится больше всего?'},
+  {d:2, t:'Какое блюдо у мамы твоей половинки — коронное?'},
+  {d:2, t:'Какую песню твоя половинка включает, когда грустно?'},
+  {d:2, t:'Какой скрытый талант есть у твоей половинки?'},
+  {d:2, t:'Какого киногероя твоя половинка считает самым крутым?'},
+  {d:2, t:'Как выглядят идеальные выходные для твоей половинки?'},
+  {d:2, t:'Во что твоя половинка любила играть в детстве?'},
+  {d:2, t:'Какое путешествие твоя половинка вспоминает чаще всего?'},
+  {d:2, t:'Что твоя половинка закажет в незнакомом ресторане?'},
+  {d:2, t:'Что помогает твоей половинке успокоиться?'},
+  {d:2, t:'Как звали лучшего друга детства твоей половинки?'},
+  {d:2, t:'Какое любимое место твоей половинки в вашем городе?'},
+  {d:2, t:'О какой суперспособности мечтает твоя половинка?'},
+  {d:2, t:'Что твоя половинка делает первым делом после пробуждения?'},
+  {d:2, t:'Какое домашнее животное твоя половинка завела бы прямо сейчас?'},
+  // Сложные
+  {d:3, t:'Какое первое впечатление о тебе сложилось у твоей половинки?'},
+  {d:3, t:'В какой момент твоя половинка поняла, что влюбилась?'},
+  {d:3, t:'Что твоя половинка ценит в тебе больше всего?'},
+  {d:3, t:'Какое ваше общее воспоминание — самое дорогое для твоей половинки?'},
+  {d:3, t:'Какое ваше свидание твоя половинка считает самым запоминающимся?'},
+  {d:3, t:'Какая твоя привычка больше всего веселит (или бесит) твою половинку?'},
+  {d:3, t:'Кем твоя половинка видит себя через пять лет?'},
+  {d:3, t:'За что твоя половинка чаще всего благодарна жизни?'},
+  {d:3, t:'Какой комплимент запомнился твоей половинке больше всего?'},
+  {d:3, t:'Чем вы похожи, по мнению твоей половинки?'},
+  {d:3, t:'Что твоя половинка хотела бы делать вместе с тобой чаще?'},
+  {d:3, t:'Какое самое трудное решение принимала твоя половинка?'},
+  {d:3, t:'Кем из своей семьи твоя половинка гордится больше всего?'},
+  {d:3, t:'Что помогает твоей половинке восстановиться после тяжёлого дня?'},
+  {d:3, t:'О чём твоя половинка мечтала в 15 лет?'},
+  {d:3, t:'Какая песня для твоей половинки — «ваша песня»?'},
+  {d:3, t:'Какой страх твоя половинка уже преодолела?'},
+  {d:3, t:'Как выглядит идеальный вечер вдвоём для твоей половинки?'},
+  // Романтика 18+
+  {d:4, t:'Какое твоё прикосновение твоя половинка любит больше всего?'},
+  {d:4, t:'Что твоя половинка считает самым привлекательным в тебе?'},
+  {d:4, t:'Какой твой наряд твоя половинка считает самым соблазнительным?'},
+  {d:4, t:'Где твоя половинка мечтала бы провести романтическую ночь?'},
+  {d:4, t:'Какой ваш поцелуй твоя половинка запомнила больше всего?'},
+  {d:4, t:'От чего твоя половинка теряет голову сильнее всего?'},
+  {d:4, t:'Какое место для поцелуя твоя половинка считает самым нежным?'},
+  {d:4, t:'О каком романтическом сюрпризе от тебя мечтает твоя половинка?'},
+  {d:4, t:'Какой комплимент о своей внешности твоя половинка хотела бы слышать чаще?'},
+  {d:4, t:'Что твоя половинка выберет: медленный танец или страстный поцелуй?'},
+  {d:4, t:'Какой аромат на тебе сводит твою половинку с ума?'},
+  {d:4, t:'Когда твоя половинка более романтична: утром или вечером?'},
+  {d:4, t:'Где твоя половинка хотела бы получить массаж от тебя?'},
+  {d:4, t:'Какое ваше свидание твоя половинка считает самым горячим?'},
+  {d:4, t:'В чём твоя половинка предпочитает спать?'},
+  {d:4, t:'Какую романтическую сцену из фильма твоя половинка хотела бы повторить с тобой?'},
+  {d:4, t:'С чего, по мнению твоей половинки, начинается идеальный романтический вечер?'},
+  {d:4, t:'Какая твоя привычка делает тебя неотразимым в глазах половинки?'},
+  {d:4, t:'Что твоя половинка предпочтёт: ванну при свечах вдвоём или завтрак в постель?'},
+  {d:4, t:'Какую песню твоя половинка поставила бы для медленного танца с тобой?'},
+];
+const KM_PTS = {1: 50, 2: 100, 3: 150, 4: 150};
+const KM_DIFFS = [
+  {id:'1',   e:'🌱', n:'Лёгкая',  s:'простые вопросы · +50 очков'},
+  {id:'2',   e:'🌿', n:'Средняя', s:'надо подумать · +100 очков'},
+  {id:'3',   e:'🌳', n:'Сложная', s:'глубокие вопросы · +150 очков'},
+  {id:'mix', e:'🎲', n:'Микс',    s:'всё вперемешку (без 18+)'},
+  {id:'hot', e:'🌶️', n:'Романтика 18+', s:'пикантные вопросы для двоих · +150 очков'},
+];
+
+/* Викторина: первый вариант в a — правильный (перемешивается при показе) */
+const QUIZ_TOPICS = [
+  {id:'mix',   e:'🎲', n:'Микс'},
+  {id:'kino',  e:'🎬', n:'Кино'},
+  {id:'muz',   e:'🎵', n:'Музыка'},
+  {id:'eda',   e:'🍕', n:'Еда'},
+  {id:'geo',   e:'🌍', n:'Мир'},
+  {id:'nauka', e:'🔬', n:'Наука'},
+  {id:'sport', e:'⚽', n:'Спорт'},
+  {id:'lubov', e:'💘', n:'Любовь'},
+  {id:'razn',  e:'✨', n:'Разное'},
+];
+const QUIZ_Q = [
+  {t:'kino', q:'Кто снял фильм «Титаник»?', a:['Джеймс Кэмерон','Стивен Спилберг','Кристофер Нолан','Квентин Тарантино']},
+  {t:'kino', q:'Из какого фильма фраза «Я вернусь»?', a:['«Терминатор»','«Рэмбо»','«Крепкий орешек»','«Матрица»']},
+  {t:'kino', q:'Как зовут великана из фильмов о Гарри Поттере?', a:['Хагрид','Добби','Сириус','Дамблдор']},
+  {t:'kino', q:'Как зовут снеговика из «Холодного сердца»?', a:['Олаф','Свен','Кристофф','Ганс']},
+  {t:'kino', q:'Кто сыграл капитана Джека Воробья?', a:['Джонни Депп','Орландо Блум','Брэд Питт','Том Круз']},
+  {t:'kino', q:'В каком городе живёт Человек-паук?', a:['Нью-Йорк','Лос-Анджелес','Чикаго','Готэм']},
+  {t:'kino', q:'В каком мультфильме крыса мечтает стать поваром?', a:['«Рататуй»','«Зверополис»','«Кунг-фу Панда»','«Тайна Коко»']},
+  {t:'kino', q:'Как зовут хоббита, который несёт Кольцо в Мордор?', a:['Фродо','Сэм','Мерри','Пиппин']},
+  {t:'kino', q:'Какая студия придумала Микки Мауса?', a:['Disney','Pixar','DreamWorks','Warner Bros']},
+  {t:'kino', q:'Кто режиссёр «Криминального чтива»?', a:['Квентин Тарантино','Мартин Скорсезе','Стивен Спилберг','Ридли Скотт']},
+  {t:'kino', q:'Как зовут льва из «Короля Льва»?', a:['Симба','Муфаса','Шрам','Тимон']},
+  {t:'kino', q:'Кто сыграл Железного человека в фильмах Marvel?', a:['Роберт Дауни-младший','Крис Эванс','Крис Хемсворт','Марк Руффало']},
+  {t:'kino', q:'Какая студия создала «Историю игрушек»?', a:['Pixar','Disney','DreamWorks','Illumination']},
+  {t:'kino', q:'Кто сыграл Форреста Гампа?', a:['Том Хэнкс','Кевин Костнер','Робин Уильямс','Мел Гибсон']},
+  {t:'kino', q:'Кто режиссёр трилогии «Властелин колец»?', a:['Питер Джексон','Джеймс Кэмерон','Ридли Скотт','Гильермо дель Торо']},
+  {t:'kino', q:'Кто сыграл Джокера в фильме 2019 года?', a:['Хоакин Феникс','Джаред Лето','Хит Леджер','Джек Николсон']},
+  {t:'kino', q:'Кто играет Гарри Поттера в киносерии?', a:['Дэниэл Рэдклифф','Руперт Гринт','Том Фелтон','Мэттью Льюис']},
+  {t:'kino', q:'Кто озвучил Шрека в оригинальной версии?', a:['Майк Майерс','Эдди Мёрфи','Кэмерон Диаз','Антонио Бандерас']},
+  {t:'kino', q:'Кто сыграл Джеймса Бонда в фильме «Skyfall»?', a:['Дэниэл Крэйг','Пирс Броснан','Шон Коннери','Роджер Мур']},
+  {t:'kino', q:'Кто сыграл Волан-де-Морта?', a:['Рэйф Файнс','Алан Рикман','Гэри Олдман','Джейсон Айзекс']},
+  {t:'kino', q:'В каком фильме герой проживает один день снова и снова?', a:['«День сурка»','«Исходный код»','«Грань будущего»','«Назад в будущее»']},
+  {t:'kino', q:'Кто режиссёр фильма «Начало»?', a:['Кристофер Нолан','Дени Вильнёв','Джеймс Кэмерон','Ридли Скотт']},
+  {t:'kino', q:'В каком мультфильме девочка попадает в мир эмоций внутри своей головы?', a:['«Головоломка»','«Тайна Коко»','«Душа»','«Ральф против интернета»']},
+  {t:'kino', q:'Кто сыграл Нео в «Матрице»?', a:['Киану Ривз','Хьюго Уивинг','Лоуренс Фишборн','Уилл Смит']},
+  {t:'kino', q:'Какая студия сняла «Зверополис»?', a:['Disney','Pixar','DreamWorks','Illumination']},
+  {t:'kino', q:'Кто режиссёр «Аватара»?', a:['Джеймс Кэмерон','Кристофер Нолан','Ридли Скотт','Стивен Спилберг']},
+  {t:'kino', q:'Как зовут мальчика, которого забыли дома в фильме «Один дома»?', a:['Кевин','Гарри','Марв','Базз']},
+  {t:'kino', q:'Кто озвучивал Дарта Вейдера в оригинальной трилогии «Звёздных войн»?', a:['Джеймс Эрл Джонс','Марк Хэмилл','Алек Гиннесс','Иэн Маккеллен']},
+  {t:'kino', q:'В каком мультфильме рыба-клоун ищет своего пропавшего сына?', a:['«В поисках Немо»','«Подводная братва»','«Дом»','«Тайная жизнь домашних животных»']},
+  {t:'kino', q:'Кто сыграл Халка в фильмах Marvel начиная с 2012 года?', a:['Марк Руффало','Эдвард Нортон','Эрик Бана','Лу Ферриньо']},
+  {t:'kino', q:'В каком городе разворачивается сюжет «Ла-Ла Ленда»?', a:['Лос-Анджелес','Нью-Йорк','Чикаго','Сан-Франциско']},
+  {t:'kino', q:'Как называется первый полнометражный мультфильм студии Disney?', a:['«Белоснежка и семь гномов»','«Пиноккио»','«Бэмби»','«Фантазия»']},
+  {t:'kino', q:'Кто сыграл главную роль в фильме «Леон»?', a:['Жан Рено','Брюс Уиллис','Джейсон Стейтем','Мэттью Макконахи']},
+  {t:'kino', q:'Какой актёр сыграл Индиану Джонса?', a:['Харрисон Форд','Том Селлек','Курт Рассел','Мел Гибсон']},
+  {t:'kino', q:'В каком фильме герои путешествуют во времени на автомобиле DeLorean?', a:['«Назад в будущее»','«Начало»','«Интерстеллар»','«Грань будущего»']},
+  {t:'kino', q:'Кто режиссёр фильма «Достать ножи»?', a:['Райан Джонсон','Квентин Тарантино','Дени Вильнёв','Тайка Вайтити']},
+  {t:'kino', q:'Как зовут главную героиню мультфильма «Моана»?', a:['Моана','Мерида','Покахонтас','Тиана']},
+  {t:'kino', q:'Кто сыграл Уэнсдэй Аддамс в сериале Netflix?', a:['Дженна Ортега','Кристина Риччи','Милли Бобби Браун','Зендея']},
+  {t:'kino', q:'Какой актёр много лет играет Росомаху в фильмах о Людях Икс?', a:['Хью Джекман','Райан Рейнольдс','Патрик Стюарт','Иэн Маккеллен']},
+  {t:'kino', q:'С каким сыщиком ассоциируется фраза «Элементарно, Ватсон»?', a:['Шерлок Холмс','Эркюль Пуаро','Мисс Марпл','Инспектор Коломбо']},
+  {t:'kino', q:'Кто сыграл Кэтнисс Эвердин в «Голодных играх»?', a:['Дженнифер Лоуренс','Шейлин Вудли','Кристен Стюарт','Эмма Уотсон']},
+  {t:'kino', q:'Какая студия выпустила мультфильм «Как приручить дракона»?', a:['DreamWorks','Pixar','Disney','Illumination']},
+  {t:'kino', q:'Кто сыграл Тора в киновселенной Marvel?', a:['Крис Хемсворт','Крис Эванс','Крис Пратт','Крис Пайн']},
+  {t:'kino', q:'В каком фильме герой узнаёт, что живёт внутри компьютерной симуляции?', a:['«Матрица»','«Начало»','«Из машины»','«Она»']},
+  {t:'kino', q:'Кто режиссёр мультфильма «Тайна Коко»?', a:['Ли Анкрич','Пит Доктер','Эндрю Стэнтон','Брэд Бёрд']},
+  {t:'kino', q:'Какой актёр сыграл Джека Доусона в «Титанике»?', a:['Леонардо Ди Каприо','Брэд Питт','Мэттью Макконахи','Том Круз']},
+  {t:'kino', q:'Кто исполнил роль Мэри Поппинс в фильме 1964 года?', a:['Джули Эндрюс','Эмили Блант','Одри Хепбёрн','Джулия Робертс']},
+  {t:'kino', q:'В какой киносаге есть персонаж по имени Йода?', a:['«Звёздные войны»','«Властелин колец»','«Хроники Нарнии»','«Гарри Поттер»']},
+  {t:'kino', q:'Кто сыграл Чудо-женщину в киновселенной DC?', a:['Галь Гадот','Скарлетт Йоханссон','Бри Ларсон','Марго Робби']},
+  {t:'muz', q:'Сколько струн у классической гитары?', a:['6','4','5','7']},
+  {t:'muz', q:'Кто написал «Лунную сонату»?', a:['Бетховен','Моцарт','Шопен','Бах']},
+  {t:'muz', q:'Из какой страны группа ABBA?', a:['Швеция','Норвегия','Германия','Дания']},
+  {t:'muz', q:'У какого инструмента 88 клавиш?', a:['Фортепиано','Аккордеон','Орган','Арфа']},
+  {t:'muz', q:'Кто исполняет песню «Shape of You»?', a:['Эд Ширан','Джастин Бибер','Бруно Марс','The Weeknd']},
+  {t:'muz', q:'Как называется самый низкий мужской голос?', a:['Бас','Баритон','Тенор','Альт']},
+  {t:'muz', q:'Какая нота идёт после «ми»?', a:['Фа','Соль','Ре','Ля']},
+  {t:'muz', q:'Кто исполнитель альбома «Thriller»?', a:['Майкл Джексон','Принс','Стиви Уандер','Лайонел Ричи']},
+  {t:'muz', q:'Сколько участников было в классическом составе The Beatles?', a:['4','3','5','6']},
+  {t:'muz', q:'Из какой страны группа Rammstein?', a:['Германия','Швеция','Финляндия','Норвегия']},
+  {t:'muz', q:'Кто написал оперу «Кармен»?', a:['Жорж Бизе','Джузеппе Верди','Джакомо Пуччини','Вольфганг Моцарт']},
+  {t:'muz', q:'Какой смычковый инструмент — самый маленький в струнном семействе?', a:['Скрипка','Альт','Виолончель','Контрабас']},
+  {t:'muz', q:'Кто исполняет песню «Bohemian Rhapsody»?', a:['Queen','The Rolling Stones','Led Zeppelin','Pink Floyd']},
+  {t:'muz', q:'Сколько нот в стандартной музыкальной октаве?', a:['7','8','5','12']},
+  {t:'muz', q:'Как называется самый высокий женский певческий голос?', a:['Сопрано','Альт','Меццо-сопрано','Контральто']},
+  {t:'muz', q:'Кто автор балета «Лебединое озеро»?', a:['Пётр Чайковский','Сергей Прокофьев','Игорь Стравинский','Николай Римский-Корсаков']},
+  {t:'muz', q:'Из какой страны родом певица Адель?', a:['Великобритания','США','Австралия','Канада']},
+  {t:'muz', q:'Какой музыкальный жанр зародился на Ямайке?', a:['Регги','Блюз','Джаз','Соул']},
+  {t:'muz', q:'Какая рок-группа исполняет песню «Numb»?', a:['Linkin Park','Metallica','Nirvana','Green Day']},
+  {t:'muz', q:'Кто автор симфонии №9 «Ода к радости»?', a:['Людвиг ван Бетховен','Иоганн Себастьян Бах','Франц Шуберт','Йозеф Гайдн']},
+  {t:'muz', q:'Какой жанр музыки ассоциируется с Элвисом Пресли?', a:['Рок-н-ролл','Джаз','Кантри','Блюз']},
+  {t:'muz', q:'Кто солист группы Queen?', a:['Фредди Меркьюри','Дэвид Боуи','Элтон Джон','Роберт Плант']},
+  {t:'muz', q:'Какой духовой инструмент меняет высоту звука движением кулисы, а не клапанами?', a:['Тромбон','Труба','Валторна','Туба']},
+  {t:'muz', q:'Кто написал мюзикл «Кошки»?', a:['Эндрю Ллойд Уэббер','Стивен Сондхайм','Клод-Мишель Шёнберг','Ричард Роджерс']},
+  {t:'muz', q:'Какая группа выпустила альбом «Dark Side of the Moon»?', a:['Pink Floyd','Led Zeppelin','The Who','Deep Purple']},
+  {t:'muz', q:'Сколько музыкантов обычно в струнном квартете?', a:['4','3','5','6']},
+  {t:'muz', q:'Кто из великих композиторов почти полностью оглох в последние годы жизни?', a:['Бетховен','Моцарт','Бах','Шопен']},
+  {t:'muz', q:'В каком американском городе зародился джаз?', a:['Новый Орлеан','Нью-Йорк','Чикаго','Детройт']},
+  {t:'muz', q:'Кто исполняет песню «Billie Jean»?', a:['Майкл Джексон','Принс','Стиви Уандер','Джеймс Браун']},
+  {t:'muz', q:'Какой музыкальный знак повышает ноту на полтона?', a:['Диез','Бемоль','Бекар','Фермата']},
+  {t:'muz', q:'Из какой страны родом группа BTS?', a:['Южная Корея','Япония','Китай','Таиланд']},
+  {t:'muz', q:'Кто написал мюзикл «Призрак оперы»?', a:['Эндрю Ллойд Уэббер','Стивен Сондхайм','Элтон Джон','Тим Райс']},
+  {t:'muz', q:'Какой голос ниже — баритон или тенор?', a:['Баритон','Тенор','Они равны','Зависит от певца']},
+  {t:'muz', q:'Кто исполнитель песни «Rolling in the Deep»?', a:['Адель','Ленни Кравиц','Эми Уайнхаус','Дафф']},
+  {t:'muz', q:'Сколько линеек в стандартном нотном стане?', a:['5','4','6','7']},
+  {t:'muz', q:'Кто автор оперы «Аида»?', a:['Джузеппе Верди','Джакомо Пуччини','Жорж Бизе','Рихард Вагнер']},
+  {t:'muz', q:'Из какой страны рэпер и продюсер Drake?', a:['Канада','США','Ямайка','Великобритания']},
+  {t:'muz', q:'Какой музыкальный темп означает «быстро»?', a:['Аллегро','Адажио','Анданте','Ленто']},
+  {t:'muz', q:'Кто исполняет хит 2008 года «Just Dance»?', a:['Lady Gaga','Rihanna','Katy Perry','Beyoncé']},
+  {t:'muz', q:'Какой инструмент называют «королём инструментов» из-за размера и числа труб?', a:['Орган','Рояль','Арфа','Барабан']},
+  {t:'muz', q:'Кто написал сюиту «Времена года»?', a:['Антонио Вивальди','Иоганн Бах','Георг Гендель','Клаудио Монтеверди']},
+  {t:'muz', q:'Из какой страны группа Scorpions?', a:['Германия','США','Великобритания','Швеция']},
+  {t:'muz', q:'Какой музыкальный жанр объединяет исполнителей Тупак и Эминем?', a:['Хип-хоп','Рок','Регги','Панк']},
+  {t:'muz', q:'Сколько октав примерно у стандартного фортепиано?', a:['7','5','6','8']},
+  {t:'muz', q:'Кто вокалист группы Nirvana?', a:['Курт Кобейн','Дэйв Грол','Крис Новоселич','Эдди Веддер']},
+  {t:'muz', q:'На каком инструменте играл Джимми Хендрикс?', a:['Электрогитара','Барабаны','Бас-гитара','Клавишные']},
+  {t:'muz', q:'Из какой страны родом композитор Фредерик Шопен?', a:['Польша','Франция','Австрия','Германия']},
+  {t:'eda', q:'Из чего делают хумус?', a:['Из нута','Из фасоли','Из гороха','Из чечевицы']},
+  {t:'eda', q:'Какая страна — родина пиццы?', a:['Италия','Греция','Франция','Испания']},
+  {t:'eda', q:'Чем пропитывают печенье в тирамису?', a:['Кофе','Молоком','Сиропом','Чаем']},
+  {t:'eda', q:'Какой сыр кладут в греческий салат?', a:['Фета','Моцарелла','Пармезан','Чеддер']},
+  {t:'eda', q:'Какая страна — родина суши?', a:['Япония','Китай','Корея','Таиланд']},
+  {t:'eda', q:'Из какой страны блюдо паэлья?', a:['Испания','Италия','Португалия','Мексика']},
+  {t:'eda', q:'Из молока какого животного делают классическую моцареллу?', a:['Буйволицы','Коровы','Козы','Овцы']},
+  {t:'eda', q:'Что значит «аль денте» про пасту?', a:['Слегка недоваренная','Очень острая','Запечённая','Со сливками']},
+  {t:'eda', q:'Какая страна считается родиной шоколада — там его впервые готовили из какао?', a:['Мексика','Швейцария','Бельгия','Франция']},
+  {t:'eda', q:'Какие бобы — основа традиционного соевого соуса?', a:['Соевые бобы','Рис','Кукуруза','Пшеница']},
+  {t:'eda', q:'Какая страна считается родиной багета?', a:['Франция','Италия','Испания','Бельгия']},
+  {t:'eda', q:'Какой соус — основа классической пиццы «Маргарита» помимо сыра и базилика?', a:['Томатный соус','Сливочный соус','Соус песто','Соус барбекю']},
+  {t:'eda', q:'Какая страна знаменита блюдом «фондю»?', a:['Швейцария','Франция','Италия','Австрия']},
+  {t:'eda', q:'Из чего традиционно готовят гуакамоле?', a:['Авокадо','Помидоры','Огурцы','Манго']},
+  {t:'eda', q:'Какая страна — родина карри?', a:['Индия','Таиланд','Китай','Пакистан']},
+  {t:'eda', q:'Какой овощ придаёт борщу характерный красный цвет?', a:['Свёкла','Морковь','Перец','Томат']},
+  {t:'eda', q:'Из какой страны блюдо том-ям?', a:['Таиланд','Вьетнам','Индонезия','Малайзия']},
+  {t:'eda', q:'Какая специя получается из высушенных рылец крокуса?', a:['Шафран','Куркума','Паприка','Кориандр']},
+  {t:'eda', q:'Какая страна знаменита блюдом паста карбонара?', a:['Италия','Франция','Испания','Греция']},
+  {t:'eda', q:'Как получают греческий йогурт более густым, чем обычный?', a:['Его дополнительно процеживают от сыворотки','Добавляют желатин','Добавляют крахмал','Варят дольше']},
+  {t:'eda', q:'Из чего в основном готовят фалафель?', a:['Из нута или бобов','Из картофеля','Из риса','Из кукурузы']},
+  {t:'eda', q:'Какой напиток получают путём ферментации виноградного сока?', a:['Вино','Пиво','Сидр','Бренди']},
+  {t:'eda', q:'Какая страна — родина настоящего пармезана (Parmigiano Reggiano)?', a:['Италия','Франция','Швейцария','Испания']},
+  {t:'eda', q:'Из какого зерна традиционно готовят кускус?', a:['Из пшеницы (манной крупы)','Из риса','Из кукурузы','Из овса']},
+  {t:'eda', q:'Какой вид чая проходит наименьшую степень ферментации?', a:['Белый','Чёрный','Улун','Пуэр']},
+  {t:'eda', q:'Какая страна — крупнейший производитель кофе в мире?', a:['Бразилия','Колумбия','Вьетнам','Эфиопия']},
+  {t:'eda', q:'Что является главным компонентом японского мисо-супа?', a:['Ферментированная соевая паста','Только рыбный бульон','Курица','Говядина']},
+  {t:'eda', q:'В какой стране хот-дог оформился как блюдо фастфуда?', a:['США','Германия','Австрия','Дания']},
+  {t:'eda', q:'Какой фрукт называют «королём фруктов» в Юго-Восточной Азии?', a:['Дуриан','Манго','Папайя','Личи']},
+  {t:'eda', q:'Какая приправа делает блюда карри жёлтыми?', a:['Куркума','Шафран','Паприка','Тмин']},
+  {t:'eda', q:'Из чего готовят традиционный испанский холодный суп гаспачо?', a:['Из помидоров и овощей','Из курицы','Из рыбы','Из грибов']},
+  {t:'eda', q:'Какая страна — родина маття (зелёного чая в порошке)?', a:['Япония','Китай','Корея','Индия']},
+  {t:'eda', q:'Какой алкогольный напиток делают из можжевеловых ягод?', a:['Джин','Вермут','Ром','Текила']},
+  {t:'eda', q:'Из какого растения делают текилу?', a:['Голубая агава','Кукуруза','Виноград','Сахарный тростник']},
+  {t:'eda', q:'Какая страна знаменита блюдом рамен?', a:['Япония','Китай','Корея','Вьетнам']},
+  {t:'eda', q:'Какой основной ингредиент традиционного индийского напитка ласси?', a:['Йогурт','Молоко','Кокосовое молоко','Сливки']},
+  {t:'eda', q:'Как называется итальянский аналог пельменей?', a:['Равиоли','Гноччи','Ризотто','Лазанья']},
+  {t:'eda', q:'Что традиционно входит в английский завтрак помимо яиц и бекона?', a:['Печёные бобы и тосты','Овсянка и мёд','Блины и сироп','Круассаны и джем']},
+  {t:'eda', q:'Какая страна — родина сыра чеддер?', a:['Великобритания','Франция','Нидерланды','Швейцария']},
+  {t:'eda', q:'Какой напиток традиционно пьют в Аргентине из высушенных листьев падуба?', a:['Мате','Чай','Кофе','Какао']},
+  {t:'eda', q:'Какая специя считается самой дорогой в мире по весу?', a:['Шафран','Ваниль','Кардамон','Мускатный орех']},
+  {t:'eda', q:'Из какого теста традиционно делают бельгийские вафли?', a:['Из дрожжевого теста','Из бисквитного теста','Из слоёного теста','Из песочного теста']},
+  {t:'eda', q:'Какая страна знаменита блюдом гуляш?', a:['Венгрия','Австрия','Германия','Чехия']},
+  {t:'eda', q:'Из какого молока делают традиционный сыр рокфор?', a:['Овечье','Козье','Коровье','Буйволиное']},
+  {t:'eda', q:'Какая страна — родина мороженого джелато?', a:['Италия','Франция','США','Испания']},
+  {t:'eda', q:'Какой овощ — основа классического французского лукового супа?', a:['Лук','Картофель','Морковь','Сельдерей']},
+  {t:'eda', q:'Какая страна знаменита десертом штрудель?', a:['Австрия','Германия','Швейцария','Венгрия']},
+  {t:'geo', q:'Какой город — столица Австралии?', a:['Канберра','Сидней','Мельбурн','Брисбен']},
+  {t:'geo', q:'На каком континенте находится пустыня Сахара?', a:['Африка','Азия','Австралия','Южная Америка']},
+  {t:'geo', q:'В какой стране находится Тадж-Махал?', a:['Индия','Пакистан','Иран','Турция']},
+  {t:'geo', q:'Какой город называют «городом на каналах»?', a:['Венеция','Париж','Прага','Барселона']},
+  {t:'geo', q:'Какая гора — самая высокая в мире?', a:['Эверест','Эльбрус','Килиманджаро','Монблан']},
+  {t:'geo', q:'Какая страна славится тюльпанами и мельницами?', a:['Нидерланды','Бельгия','Дания','Швейцария']},
+  {t:'geo', q:'Какой город — столица Японии?', a:['Токио','Киото','Осака','Сеул']},
+  {t:'geo', q:'Какой язык — официальный в Бразилии?', a:['Португальский','Испанский','Бразильский','Английский']},
+  {t:'geo', q:'Какая страна — самая большая по площади в мире?', a:['Россия','Канада','Китай','США']},
+  {t:'geo', q:'Какая река считается самой длинной в мире?', a:['Нил','Амазонка','Янцзы','Миссисипи']},
+  {t:'geo', q:'Какое государство — самое маленькое по площади в мире?', a:['Ватикан','Монако','Сан-Марино','Лихтенштейн']},
+  {t:'geo', q:'На каком континенте находится больше всего стран?', a:['Африка','Азия','Европа','Южная Америка']},
+  {t:'geo', q:'Какая страна расположена сразу в двух частях света — Европе и Азии?', a:['Турция','Египет','Казахстан','Индонезия']},
+  {t:'geo', q:'Какое озеро — самое глубокое в мире?', a:['Байкал','Танганьика','Каспийское море','Верхнее']},
+  {t:'geo', q:'Какая пустыня — самая большая в мире (без учёта ледяных)?', a:['Сахара','Гоби','Калахари','Аравийская']},
+  {t:'geo', q:'Какой город — столица Канады?', a:['Оттава','Торонто','Ванкувер','Монреаль']},
+  {t:'geo', q:'Какая страна на карте имеет форму сапога?', a:['Италия','Греция','Хорватия','Португалия']},
+  {t:'geo', q:'Какой город — столица Египта?', a:['Каир','Александрия','Гиза','Луксор']},
+  {t:'geo', q:'Какой пролив разделяет Европу и Африку в самой узкой точке?', a:['Гибралтарский','Босфор','Ла-Манш','Магелланов']},
+  {t:'geo', q:'Какой город — столица США?', a:['Вашингтон','Нью-Йорк','Лос-Анджелес','Чикаго']},
+  {t:'geo', q:'Какая страна — самая населённая в мире?', a:['Индия','Китай','США','Индонезия']},
+  {t:'geo', q:'Какой остров — самый большой в мире?', a:['Гренландия','Мадагаскар','Борнео','Новая Гвинея']},
+  {t:'geo', q:'Какой город — столица Германии?', a:['Берлин','Мюнхен','Гамбург','Франкфурт']},
+  {t:'geo', q:'Какую страну называют «страной восходящего солнца»?', a:['Япония','Китай','Южная Корея','Таиланд']},
+  {t:'geo', q:'Какое море считается самым солёным в мире?', a:['Мёртвое море','Красное море','Чёрное море','Каспийское море']},
+  {t:'geo', q:'Какой город — столица Великобритании?', a:['Лондон','Манчестер','Эдинбург','Ливерпуль']},
+  {t:'geo', q:'Какая страна делит первое место по числу соседних стран (14)?', a:['Китай','Бразилия','Германия','Индия']},
+  {t:'geo', q:'Какой водопад считается самым высоким в мире?', a:['Анхель','Ниагарский','Виктория','Игуасу']},
+  {t:'geo', q:'Какой город — столица Франции?', a:['Париж','Лион','Марсель','Ницца']},
+  {t:'geo', q:'Как называется крошечная страна-анклав, со всех сторон окружённая территорией Италии (не считая Ватикана)?', a:['Сан-Марино','Монако','Андорра','Лихтенштейн']},
+  {t:'geo', q:'Какой город — столица Испании?', a:['Мадрид','Барселона','Севилья','Валенсия']},
+  {t:'geo', q:'Какой континент называют «ледяным»?', a:['Антарктида','Арктика','Гренландия','Сибирь']},
+  {t:'geo', q:'Какой город — столица Китая?', a:['Пекин','Шанхай','Гонконг','Гуанчжоу']},
+  {t:'geo', q:'В какой стране находятся пирамиды Гизы?', a:['Египет','Мексика','Судан','Перу']},
+  {t:'geo', q:'Какое море омывает Санкт-Петербург?', a:['Балтийское','Чёрное','Каспийское','Азовское']},
+  {t:'geo', q:'Какой город — столица Италии?', a:['Рим','Милан','Неаполь','Венеция']},
+  {t:'geo', q:'Какая река протекает через Лондон?', a:['Темза','Сена','Дунай','Рейн']},
+  {t:'geo', q:'Какой пролив на юге Америки соединяет Атлантический и Тихий океаны?', a:['Магелланов пролив','Берингов пролив','Гибралтарский пролив','Босфор']},
+  {t:'geo', q:'Какой город — столица Бразилии?', a:['Бразилиа','Рио-де-Жанейро','Сан-Паулу','Сальвадор']},
+  {t:'geo', q:'Какая горная система разделяет Европу и Азию в России?', a:['Уральские горы','Кавказ','Альпы','Карпаты']},
+  {t:'geo', q:'Какую страну называют родиной фьордов?', a:['Норвегия','Швеция','Финляндия','Исландия']},
+  {t:'geo', q:'Какой город — столица Турции?', a:['Анкара','Стамбул','Измир','Анталья']},
+  {t:'geo', q:'Какой океан — самый маленький по площади?', a:['Северный Ледовитый','Индийский','Атлантический','Тихий']},
+  {t:'geo', q:'Какая страна имеет наибольшее число часовых поясов благодаря заморским территориям?', a:['Франция','Россия','США','Китай']},
+  {t:'geo', q:'Какой город — столица Мексики?', a:['Мехико','Канкун','Гвадалахара','Тихуана']},
+  {t:'geo', q:'Какое островное государство находится южнее Индии в Индийском океане?', a:['Шри-Ланка','Мальдивы','Сейшелы','Маврикий']},
+  {t:'geo', q:'Какая река протекает через Париж?', a:['Сена','Луара','Рона','Гаронна']},
+  {t:'geo', q:'Какая страна вместе с Норвегией занимает почти весь Скандинавский полуостров?', a:['Швеция','Финляндия','Дания','Исландия']},
+  {t:'nauka', q:'Сколько планет в Солнечной системе?', a:['8','9','7','10']},
+  {t:'nauka', q:'Какое животное — самое большое на Земле?', a:['Синий кит','Слон','Кашалот','Жираф']},
+  {t:'nauka', q:'Сколько сердец у осьминога?', a:['3','1','2','8']},
+  {t:'nauka', q:'Какая планета ближе всех к Солнцу?', a:['Меркурий','Венера','Марс','Земля']},
+  {t:'nauka', q:'Сколько костей у взрослого человека?', a:['Около 206','Около 150','Около 300','Около 100']},
+  {t:'nauka', q:'Что измеряют в децибелах?', a:['Громкость звука','Яркость света','Скорость ветра','Давление']},
+  {t:'nauka', q:'Какое насекомое «танцует», показывая путь к цветам?', a:['Пчела','Муравей','Бабочка','Стрекоза']},
+  {t:'nauka', q:'Какой газ необходим человеку для дыхания?', a:['Кислород','Азот','Водород','Углекислый газ']},
+  {t:'nauka', q:'Какой химический элемент обозначается символом Au?', a:['Золото','Серебро','Алюминий','Аргон']},
+  {t:'nauka', q:'Сколько хромосом в клетках человека в норме?', a:['46','44','48','23']},
+  {t:'nauka', q:'Какая единица измеряет силу тока?', a:['Ампер','Вольт','Ом','Ватт']},
+  {t:'nauka', q:'Какой газ составляет большую часть атмосферы Земли?', a:['Азот','Кислород','Углекислый газ','Водород']},
+  {t:'nauka', q:'Кто сформулировал теорию относительности?', a:['Альберт Эйнштейн','Исаак Ньютон','Нильс Бор','Макс Планк']},
+  {t:'nauka', q:'Сколько зубов у взрослого человека в норме?', a:['32','28','30','34']},
+  {t:'nauka', q:'Какой орган в теле человека самый большой?', a:['Кожа','Печень','Лёгкие','Кишечник']},
+  {t:'nauka', q:'Какая частица имеет отрицательный заряд?', a:['Электрон','Протон','Нейтрон','Позитрон']},
+  {t:'nauka', q:'Какая скорость света в вакууме, округлённо?', a:['Около 300 000 км/с','Около 30 000 км/с','Около 3 000 000 км/с','Около 300 км/с']},
+  {t:'nauka', q:'Кто открыл закон всемирного тяготения?', a:['Исаак Ньютон','Галилео Галилей','Альберт Эйнштейн','Иоганн Кеплер']},
+  {t:'nauka', q:'Какой химический элемент самый лёгкий?', a:['Водород','Гелий','Литий','Кислород']},
+  {t:'nauka', q:'Сколько камер в сердце человека?', a:['4','2','3','6']},
+  {t:'nauka', q:'Какая наука изучает грибы?', a:['Микология','Ботаника','Зоология','Микробиология']},
+  {t:'nauka', q:'Какой прибор измеряет атмосферное давление?', a:['Барометр','Термометр','Гигрометр','Анемометр']},
+  {t:'nauka', q:'Какое животное считается самым умным среди приматов, кроме человека?', a:['Шимпанзе','Горилла','Орангутан','Бонобо']},
+  {t:'nauka', q:'Сколько пар хромосом у человека?', a:['23','22','24','46']},
+  {t:'nauka', q:'Какой газ растения поглощают при фотосинтезе?', a:['Углекислый газ','Кислород','Азот','Водород']},
+  {t:'nauka', q:'Кто открыл пенициллин?', a:['Александр Флеминг','Луи Пастер','Роберт Кох','Эдвард Дженнер']},
+  {t:'nauka', q:'Какая планета известна своими кольцами больше всех?', a:['Сатурн','Юпитер','Уран','Нептун']},
+  {t:'nauka', q:'Сколько ног у паука?', a:['8','6','10','4']},
+  {t:'nauka', q:'Какой процесс превращает жидкость в газ?', a:['Испарение','Конденсация','Сублимация','Кристаллизация']},
+  {t:'nauka', q:'Какая кислота содержится в желудке человека?', a:['Соляная кислота','Серная кислота','Уксусная кислота','Лимонная кислота']},
+  {t:'nauka', q:'Сколько примерно дней длится оборот Земли вокруг Солнца?', a:['365','30','100','730']},
+  {t:'nauka', q:'Кто разработал периодическую таблицу химических элементов?', a:['Дмитрий Менделеев','Антуан Лавуазье','Джон Дальтон','Эрнест Резерфорд']},
+  {t:'nauka', q:'Какую часть клетки называют её «энергетической станцией»?', a:['Митохондрия','Ядро','Рибосома','Вакуоль']},
+  {t:'nauka', q:'Сколько естественных спутников у Земли?', a:['1','2','0','3']},
+  {t:'nauka', q:'Какой металл традиционно используют в жидкостных термометрах?', a:['Ртуть','Свинец','Олово','Цинк']},
+  {t:'nauka', q:'Какая наука изучает землетрясения?', a:['Сейсмология','Геология','Вулканология','Метеорология']},
+  {t:'nauka', q:'Сколько примерно литров крови у взрослого человека?', a:['Около 5 литров','Около 2 литров','Около 10 литров','Около 1 литра']},
+  {t:'nauka', q:'Какой витамин вырабатывается в коже под воздействием солнца?', a:['Витамин D','Витамин C','Витамин A','Витамин B12']},
+  {t:'nauka', q:'Какое самое твёрдое природное вещество на Земле?', a:['Алмаз','Кварц','Гранит','Титан']},
+  {t:'nauka', q:'Сколько дней в среднем длится беременность у человека?', a:['Около 280 дней','Около 200 дней','Около 320 дней','Около 250 дней']},
+  {t:'nauka', q:'Какого газа человек выдыхает больше, чем вдыхает?', a:['Углекислый газ','Кислород','Азот','Водород']},
+  {t:'nauka', q:'Какая планета Солнечной системы самая горячая?', a:['Венера','Меркурий','Марс','Юпитер']},
+  {t:'nauka', q:'Кто разработал теорию эволюции путём естественного отбора?', a:['Чарльз Дарвин','Грегор Мендель','Жан-Батист Ламарк','Альфред Уоллес']},
+  {t:'nauka', q:'Какой парный орган фильтрует кровь и выводит токсины из организма?', a:['Почки','Печень','Лёгкие','Селезёнка']},
+  {t:'nauka', q:'Сколько минут требуется свету, чтобы долететь от Солнца до Земли?', a:['Около 8 минут','Около 1 минуты','Около 30 минут','Около 60 минут']},
+  {t:'nauka', q:'Какая единица измеряет количество вещества?', a:['Моль','Килограмм','Литр','Ньютон']},
+  {t:'nauka', q:'Какой газ, помимо кислорода, часто добавляют в баллоны для дайверов?', a:['Азот','Углекислый газ','Гелий','Водород']},
+  {t:'nauka', q:'Какая кость в теле человека самая длинная?', a:['Бедренная кость','Плечевая кость','Большеберцовая кость','Локтевая кость']},
+  {t:'sport', q:'Сколько игроков футбольной команды на поле?', a:['11','10','9','12']},
+  {t:'sport', q:'Раз в сколько лет проходят летние Олимпийские игры?', a:['Раз в 4 года','Раз в 2 года','Раз в 3 года','Раз в 5 лет']},
+  {t:'sport', q:'В каком виде спорта нужна шайба?', a:['Хоккей','Кёрлинг','Гольф','Крикет']},
+  {t:'sport', q:'Сколько колец на олимпийском флаге?', a:['5','4','6','3']},
+  {t:'sport', q:'Какая страна — родина дзюдо?', a:['Япония','Китай','Корея','Бразилия']},
+  {t:'sport', q:'Как называют счёт 40:40 в теннисе?', a:['«Ровно»','«Брейк»','«Тай-брейк»','«Гейм»']},
+  {t:'sport', q:'В каком виде спорта есть термин «страйк»?', a:['Боулинг','Теннис','Бокс','Плавание']},
+  {t:'sport', q:'Сколько игроков в баскетбольной команде на площадке одновременно?', a:['5','6','7','4']},
+  {t:'sport', q:'В каком виде спорта используется термин «нокаут»?', a:['Бокс','Борьба','Фехтование','Дзюдо']},
+  {t:'sport', q:'Сколько сетов нужно выиграть мужчине на турнире Большого шлема в теннисе (максимум)?', a:['3 из 5','2 из 3','4 из 7','1']},
+  {t:'sport', q:'В какой стране был изобретён баскетбол?', a:['США','Канада','Великобритания','Франция']},
+  {t:'sport', q:'Сколько игроков в волейбольной команде на площадке?', a:['6','5','7','4']},
+  {t:'sport', q:'Какой вид спорта часто называют «королём спорта»?', a:['Футбол','Баскетбол','Хоккей','Теннис']},
+  {t:'sport', q:'Сколько раундов максимум в профессиональном боксёрском поединке?', a:['12','10','15','8']},
+  {t:'sport', q:'В каком виде спорта есть стиль плавания «баттерфляй»?', a:['Плавание','Гимнастика','Фигурное катание','Прыжки в воду']},
+  {t:'sport', q:'Сколько полевых игроков в хоккейной команде на льду одновременно (без вратаря)?', a:['5','6','4','7']},
+  {t:'sport', q:'Какая страна выиграла первый чемпионат мира по футболу в 1930 году?', a:['Уругвай','Бразилия','Аргентина','Италия']},
+  {t:'sport', q:'В каком виде спорта используют термин «эйс» для подачи навылет?', a:['Теннис','Волейбол','Бадминтон','Настольный теннис']},
+  {t:'sport', q:'Сколько лунок в стандартном раунде гольфа?', a:['18','9','12','24']},
+  {t:'sport', q:'Какой вид спорта проводится на льду с использованием камней и щёток?', a:['Кёрлинг','Хоккей','Бобслей','Фигурное катание']},
+  {t:'sport', q:'Сколько игроков в команде по классическому регби-15?', a:['15','13','11','7']},
+  {t:'sport', q:'В каком городе прошли первые современные Олимпийские игры в 1896 году?', a:['Афины','Париж','Лондон','Рим']},
+  {t:'sport', q:'Какой вид спорта традиционно ассоциируется с турниром в Уимблдоне?', a:['Теннис','Гольф','Крикет','Регби']},
+  {t:'sport', q:'Сколько очков даёт трёхочковый бросок в баскетболе?', a:['3','2','1','4']},
+  {t:'sport', q:'В каком виде спорта используют термин «сальто»?', a:['Гимнастика','Плавание','Стрельба','Гольф']},
+  {t:'sport', q:'Какая страна считается родиной крикета?', a:['Англия','Индия','Австралия','Пакистан']},
+  {t:'sport', q:'Сколько минут длится один тайм в футболе?', a:['45 минут','30 минут','40 минут','60 минут']},
+  {t:'sport', q:'В каком виде спорта есть весовые категории от наилегчайшей до супертяжёлой?', a:['Бокс','Плавание','Теннис','Гольф']},
+  {t:'sport', q:'Какой снаряд используют в художественной гимнастике вместе с лентой, обручем и булавами?', a:['Мяч','Штанга','Ракетка','Диск']},
+  {t:'sport', q:'Сколько игроков от одной команды на поле в американском футболе?', a:['11','9','12','15']},
+  {t:'sport', q:'В каком виде спорта есть дисциплина слалом?', a:['Горные лыжи','Бег','Плавание','Велоспорт']},
+  {t:'sport', q:'Какая страна считается родиной современного футбола (правила 1863 года)?', a:['Англия','Бразилия','Германия','Италия']},
+  {t:'sport', q:'Сколько очков стоит заброшенная шайба в хоккее?', a:['1','2','3','0']},
+  {t:'sport', q:'На каких снарядах соревнуются в спортивной гимнастике — конь, кольца и что ещё?', a:['Брусья','Лента','Обруч','Батут']},
+  {t:'sport', q:'Сколько игроков в команде по мини-футболу (футзал) на поле?', a:['5','6','4','7']},
+  {t:'sport', q:'Какой вид спорта включает дисциплины вольная и греко-римская борьба?', a:['Борьба','Бокс','Дзюдо','Самбо']},
+  {t:'sport', q:'В каком городе проходили летние Олимпийские игры 2016 года?', a:['Рио-де-Жанейро','Лондон','Токио','Пекин']},
+  {t:'sport', q:'Какой формы стандартный боксёрский ринг?', a:['Квадратный','Треугольный','Круглый','Восьмиугольный']},
+  {t:'sport', q:'Какой вид спорта ассоциируется с турниром «Тур де Франс»?', a:['Велоспорт','Автогонки','Марафон','Триатлон']},
+  {t:'sport', q:'Сколько игроков всего у хоккейной команды на площадке вместе с вратарём?', a:['6','5','7','4']},
+  {t:'sport', q:'В какой лёгкоатлетической дисциплине используют шест для преодоления высоты?', a:['Прыжки с шестом','Прыжки в высоту','Тройной прыжок','Прыжки в длину']},
+  {t:'sport', q:'Какая страна выигрывала чемпионат мира по футболу больше всех раз?', a:['Бразилия','Германия','Италия','Аргентина']},
+  {t:'sport', q:'Сколько игроков в команде по гандболу на площадке?', a:['7','6','5','8']},
+  {t:'sport', q:'Какой конный вид спорта заключается в преодолении препятствий на скорость и чистоту прыжков?', a:['Конкур','Скачки','Выездка','Родео']},
+  {t:'sport', q:'Раз в сколько лет проводятся зимние Олимпийские игры?', a:['Раз в 4 года','Раз в 2 года','Раз в 3 года','Раз в 5 лет']},
+  {t:'sport', q:'Какой вид спорта из-за традиционной белой формы игроков называют «белым спортом»?', a:['Теннис','Гольф','Кёрлинг','Фигурное катание']},
+  {t:'sport', q:'Сколько игроков в стартовом составе футбольной команды вместе с вратарём?', a:['11','10','12','9']},
+  {t:'lubov', q:'Какой гормон называют «гормоном объятий»?', a:['Окситоцин','Адреналин','Мелатонин','Инсулин']},
+  {t:'lubov', q:'Когда отмечают День святого Валентина?', a:['14 февраля','8 марта','14 марта','1 февраля']},
+  {t:'lubov', q:'Какая годовщина свадьбы называется «золотой»?', a:['50 лет','25 лет','40 лет','60 лет']},
+  {t:'lubov', q:'Сколько лет вместе означает «ситцевая» свадьба?', a:['1 год','3 года','5 лет','10 лет']},
+  {t:'lubov', q:'Как зовут бога любви в греческой мифологии?', a:['Эрот','Зевс','Аполлон','Гермес']},
+  {t:'lubov', q:'В какой стране находится знаменитый «балкон Джульетты»?', a:['Италия','Франция','Испания','Греция']},
+  {t:'lubov', q:'Как называется боязнь вступления в брак?', a:['Гамофобия','Агорафобия','Клаустрофобия','Аэрофобия']},
+  {t:'lubov', q:'Сколько лет означает «бумажная» свадьба?', a:['2 года','1 год','3 года','5 лет']},
+  {t:'lubov', q:'Сколько лет означает «кожаная» свадьба?', a:['3 года','2 года','5 лет','7 лет']},
+  {t:'lubov', q:'Сколько лет означает «деревянная» свадьба?', a:['5 лет','3 года','7 лет','10 лет']},
+  {t:'lubov', q:'Сколько лет означает «медная» свадьба?', a:['7 лет','5 лет','10 лет','12 лет']},
+  {t:'lubov', q:'Сколько лет означает «оловянная» свадьба?', a:['10 лет','7 лет','15 лет','20 лет']},
+  {t:'lubov', q:'Сколько лет означает «хрустальная» свадьба?', a:['15 лет','10 лет','20 лет','25 лет']},
+  {t:'lubov', q:'Сколько лет означает «фарфоровая» свадьба?', a:['20 лет','15 лет','25 лет','30 лет']},
+  {t:'lubov', q:'Сколько лет означает «серебряная» свадьба?', a:['25 лет','20 лет','30 лет','15 лет']},
+  {t:'lubov', q:'Сколько лет означает «жемчужная» свадьба?', a:['30 лет','25 лет','35 лет','20 лет']},
+  {t:'lubov', q:'Сколько лет означает «коралловая» свадьба?', a:['35 лет','30 лет','40 лет','45 лет']},
+  {t:'lubov', q:'Сколько лет означает «рубиновая» свадьба?', a:['40 лет','35 лет','45 лет','50 лет']},
+  {t:'lubov', q:'Сколько лет означает «сапфировая» свадьба?', a:['45 лет','40 лет','50 лет','55 лет']},
+  {t:'lubov', q:'Сколько лет означает «изумрудная» свадьба?', a:['55 лет','50 лет','60 лет','45 лет']},
+  {t:'lubov', q:'Сколько лет означает «бриллиантовая» свадьба?', a:['60 лет','50 лет','55 лет','70 лет']},
+  {t:'lubov', q:'Какой камень традиционно дарят на помолвку как символ верности?', a:['Бриллиант','Изумруд','Сапфир','Рубин']},
+  {t:'lubov', q:'Как называется церемония обмена кольцами и обещание вступить в брак до самой свадьбы?', a:['Помолвка','Венчание','Роспись','Сватовство']},
+  {t:'lubov', q:'В какой стране зародилась традиция «Белого дня» 14 марта — ответного подарка после Дня всех влюблённых?', a:['Япония','Корея','Китай','США']},
+  {t:'lubov', q:'Какой цветок традиционно считается символом любви и страсти?', a:['Красная роза','Ромашка','Тюльпан','Лилия']},
+  {t:'lubov', q:'Как называют супругов, отметивших 50 лет совместной жизни?', a:['Золотые юбиляры','Серебряные юбиляры','Бриллиантовые юбиляры','Рубиновые юбиляры']},
+  {t:'lubov', q:'Какой месяц на западе традиционно называют «месяцем свадеб»?', a:['Июнь','Май','Сентябрь','Декабрь']},
+  {t:'lubov', q:'Какого цвета традиционно свадебное платье невесты в западной культуре?', a:['Белое','Красное','Голубое','Чёрное']},
+  {t:'lubov', q:'Какого цвета традиционный свадебный наряд невесты в Индии?', a:['Красный','Белый','Синий','Зелёный']},
+  {t:'lubov', q:'Какая планета в астрологии традиционно связана с любовью?', a:['Венера','Марс','Юпитер','Меркурий']},
+  {t:'lubov', q:'В какой стране находится Тадж-Махал, построенный в память о любимой жене?', a:['Индия','Пакистан','Иран','Турция']},
+  {t:'lubov', q:'Какой праздник отмечают 8 июля в России как День семьи, любви и верности?', a:['День Петра и Февронии','День Валентина','День матери','День влюблённых']},
+  {t:'lubov', q:'Какой драгоценный камень традиционно ассоциируется с апрелем и часто используется в помолвочных кольцах?', a:['Бриллиант','Изумруд','Сапфир','Аквамарин']},
+  {t:'lubov', q:'Какая пара из трагедии Шекспира стала символом несчастной любви?', a:['Ромео и Джульетта','Тристан и Изольда','Антоний и Клеопатра','Гамлет и Офелия']},
+  {t:'lubov', q:'Какой гормон, помимо окситоцина, называют «гормоном удовольствия» и связывают с влюблённостью?', a:['Дофамин','Кортизол','Инсулин','Мелатонин']},
+  {t:'lubov', q:'Как называется примета о том, что жених не должен видеть невесту в платье до церемонии?', a:['Примета на удачу в браке','Юридическое требование','Религиозный обряд','Дресс-код']},
+  {t:'lubov', q:'По традиции в романтичном букете дарят нечётное или чётное количество цветов?', a:['Нечётное','Чётное','Любое','Только 12']},
+  {t:'lubov', q:'Какой итальянский город называют «городом влюблённых» из-за каналов и романтичной атмосферы?', a:['Венеция','Рим','Флоренция','Милан']},
+  {t:'lubov', q:'Какой мост в Париже влюблённые украшают замочками в знак вечной любви?', a:['Мост Пон-де-з-Ар','Эйфелева башня','Триумфальная арка','Лувр']},
+  {t:'lubov', q:'Какую оперу Джузеппе Верди о трагической любви куртизанки часто ставят в мире?', a:['«Травиата»','«Аида»','«Риголетто»','«Отелло»']},
+  {t:'lubov', q:'Как зовут бога любви в древнеримской мифологии — аналог греческого Эрота?', a:['Купидон','Марс','Юпитер','Вулкан']},
+  {t:'lubov', q:'Какой цветок по легенде используют для гадания «любит — не любит»?', a:['Ромашка','Роза','Тюльпан','Лаванда']},
+  {t:'lubov', q:'В каком древнегреческом мифе Пигмалион влюбляется в статую, которую сам создал?', a:['Миф о Пигмалионе и Галатее','Миф об Орфее и Эвридике','Миф о Психее и Эросе','Миф о Дафне и Аполлоне']},
+  {t:'lubov', q:'Какой драгоценный камень считается «камнем июня» и часто используется в обручальных кольцах наряду с бриллиантом?', a:['Жемчуг','Изумруд','Топаз','Аметист']},
+  {t:'lubov', q:'Какой символ, напоминающий цифру 8 на боку, означает вечность и бесконечную любовь?', a:['Знак бесконечности','Знак сердца','Знак инь-ян','Кольцо']},
+  {t:'lubov', q:'Какой миф из диалога Платона «Пир» описывает людей, разделённых пополам в поисках своей половины?', a:['Миф Аристофана','Миф о Психее и Эросе','Миф об Орфее и Эвридике','Миф о Нарциссе']},
+  {t:'lubov', q:'Какой цветок в Викторианскую эпоху символизировал признание в вечной любви на языке цветов?', a:['Красная роза','Белая лилия','Жёлтый тюльпан','Фиолетовая орхидея']},
+  {t:'razn', q:'Сколько цветов у радуги?', a:['7','6','8','5']},
+  {t:'razn', q:'Сколько дней в високосном году?', a:['366','365','364','367']},
+  {t:'razn', q:'Какая валюта в Японии?', a:['Иена','Юань','Вона','Доллар']},
+  {t:'razn', q:'Сколько минут в сутках?', a:['1440','1240','1600','2400']},
+  {t:'razn', q:'Кто первым полетел в космос?', a:['Юрий Гагарин','Нил Армстронг','Алексей Леонов','Герман Титов']},
+  {t:'razn', q:'Какой металл жидкий при комнатной температуре?', a:['Ртуть','Свинец','Олово','Алюминий']},
+  {t:'razn', q:'Сколько букв в русском алфавите?', a:['33','32','31','30']},
+  {t:'razn', q:'Какой океан — самый большой?', a:['Тихий','Атлантический','Индийский','Северный Ледовитый']},
+  {t:'razn', q:'Сколько метров примерно в одной миле?', a:['Около 1609 м','Около 1000 м','Около 2000 м','Около 1500 м']},
+  {t:'razn', q:'Сколько граммов в одном килограмме?', a:['1000','100','10000','500']},
+  {t:'razn', q:'Какая страна считается родиной шахмат по одной из версий?', a:['Индия','Китай','Персия','Египет']},
+  {t:'razn', q:'Сколько дней в обычной неделе?', a:['7','5','6','8']},
+  {t:'razn', q:'Сколько секунд в одном часе?', a:['3600','1000','6000','600']},
+  {t:'razn', q:'Какая группа крови встречается у людей чаще всего?', a:['Первая (O)','Вторая (A)','Третья (B)','Четвёртая (AB)']},
+  {t:'razn', q:'Сколько примерно костей в скелете новорождённого — больше, чем у взрослого?', a:['Около 300','Около 206','Около 150','Около 400']},
+  {t:'razn', q:'Из какого материала чаще всего делают современные ходовые монеты?', a:['Сталь с покрытием','Золото','Серебро','Платина']},
+  {t:'razn', q:'Сколько цветов на олимпийском флаге вместе с белым фоном?', a:['6','5','4','7']},
+  {t:'razn', q:'Какой язык — самый распространённый в мире по числу носителей как родного?', a:['Китайский','Английский','Испанский','Хинди']},
+  {t:'razn', q:'Сколько дней в феврале високосного года?', a:['29','28','30','31']},
+  {t:'razn', q:'Какая страна изобрела бумагу?', a:['Китай','Египет','Индия','Греция']},
+  {t:'razn', q:'Сколько нулей в числе миллион?', a:['6','5','7','3']},
+  {t:'razn', q:'Какой язык программирования чаще всего используют для интерактивности на веб-страницах?', a:['JavaScript','Python','Java','C++']},
+  {t:'razn', q:'Сколько граней у стандартного игрального кубика?', a:['6','4','8','12']},
+  {t:'razn', q:'Какая страна изобрела порох?', a:['Китай','Индия','Аравия','Монголия']},
+  {t:'razn', q:'Сколько сторон у шестиугольника?', a:['6','5','7','8']},
+  {t:'razn', q:'Какой старинный прибор измеряет время с помощью пересыпающегося песка?', a:['Песочные часы','Солнечные часы','Водяные часы','Механические часы']},
+  {t:'razn', q:'Сколько букв в английском алфавите?', a:['26','24','28','30']},
+  {t:'razn', q:'Какая страна первой запустила искусственный спутник Земли?', a:['СССР','США','Китай','Германия']},
+  {t:'razn', q:'Какой цвет радуги идёт сразу после красного?', a:['Оранжевый','Жёлтый','Зелёный','Синий']},
+  {t:'razn', q:'Какой писатель создал детектива Шерлока Холмса?', a:['Артур Конан Дойл','Агата Кристи','Эдгар По','Уилки Коллинз']},
+  {t:'razn', q:'Сколько сторон у треугольника?', a:['3','4','2','5']},
+  {t:'razn', q:'Какая известная башня находится в Париже?', a:['Эйфелева башня','Пизанская башня','Биг-Бен','Статуя Свободы']},
+  {t:'razn', q:'Сколько планет земной группы (каменистых) в Солнечной системе?', a:['4','3','5','8']},
+  {t:'razn', q:'Какой музыкальный конкурс проводится в Европе ежегодно и собирает десятки стран?', a:['Евровидение','Грэмми','Оскар','Брит-Айвордс']},
+  {t:'razn', q:'Сколько лет длится один век?', a:['100 лет','10 лет','1000 лет','50 лет']},
+  {t:'razn', q:'Какая компания создала операционную систему Windows?', a:['Microsoft','Apple','Google','IBM']},
+  {t:'razn', q:'Сколько основных сторон света существует?', a:['4','3','6','8']},
+  {t:'razn', q:'В каком музее Парижа хранится картина «Мона Лиза»?', a:['Лувр','Орсе','Эрмитаж','Прадо']},
+  {t:'razn', q:'Сколько дней длится обычный, невисокосный год?', a:['365','364','366','360']},
+  {t:'razn', q:'Какую страну называют родиной оригами?', a:['Япония','Китай','Корея','Таиланд']},
+  {t:'razn', q:'Сколько игроков минимум нужно для партии в шахматы?', a:['2','1','3','4']},
+  {t:'razn', q:'Какой музей в Санкт-Петербурге — один из крупнейших в мире?', a:['Эрмитаж','Третьяковская галерея','Русский музей','Кунсткамера']},
+  {t:'razn', q:'Сколько граней (сторон) у куба?', a:['6','4','8','12']},
+  {t:'razn', q:'Кто написал роман «Война и мир»?', a:['Лев Толстой','Фёдор Достоевский','Антон Чехов','Иван Тургенев']},
+  {t:'razn', q:'Сколько основных цветов света смешивают, чтобы получить белый цвет?', a:['3 (красный, зелёный, синий)','2','4','7']},
+  {t:'razn', q:'Какая известная река протекает через Египет?', a:['Нил','Тигр','Евфрат','Иордан']},
+  {t:'razn', q:'Сколько примерно граммов в одной унции?', a:['Около 28 г','Около 50 г','Около 100 г','Около 10 г']},
+  {t:'razn', q:'Какой физик разработал три закона движения?', a:['Исаак Ньютон','Галилео Галилей','Альберт Эйнштейн','Никола Тесла']},
+];
+
+/* «Кто из вас?» — продолжение фразы «Кто из вас скорее…» */
+const WHO_Q = [
+  'проспит будильник?','первым заснёт во время фильма?','съест последний кусочек пиццы?',
+  'дольше собирается на выход?','смеётся над своими же шутками?','выживет в зомби-апокалипсисе?',
+  'спонтанно купит билеты в другую страну?','заплачет на грустном фильме?','первым идёт мириться после ссоры?',
+  'больше залипает в телефоне?','лучше танцует?','чаще теряет ключи?','станет знаменитым?',
+  'потратит всю зарплату за один день?','лучше ориентируется по навигатору?','заведёт разговор с незнакомцем?',
+  'устроит романтический сюрприз?','больше любит обниматься?','съест что-то странное на спор?',
+  'забудет важную дату?','выиграет караоке-баттл?','приютит бездомного котёнка?','будет торговаться на рынке?',
+  'соберёт чемодан за 10 минут?','испечёт торт с нуля?','обыграет другого в шахматы?','прыгнет с парашютом?',
+  'наведёт порядок, когда дома бардак?','споёт в душе в полный голос?','первым напишет «доброе утро»?',
+  'уснёт в самолёте ещё до взлёта?','запомнит имена всех новых знакомых?','сфотографирует еду, прежде чем есть?',
+  'втихаря посмотрит следующую серию вашего сериала?','позовёт гостей без предупреждения?','починит что-то по дому?',
+  'придумает самый оригинальный подарок?','пойдёт зимой купаться?','будет смеяться до слёз над мемами?',
+  'первым признается, что был неправ?'
+];
+
+/* =================== СОСТОЯНИЕ =================== */
+
+const KEY = 'duet_v1';
+let S = load() || {
+  p1: {name:'', emoji:'🦊'},
+  p2: {name:'', emoji:'🐰'},
+  score: 0, games: 0, kmBest: -1, quizBest: -1,
+};
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)); } catch(e) { return null; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
+
+const $ = id => document.getElementById(id);
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+let activeGame = null; // 'km' | 'quiz' | null
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'scr-home' || id === 'scr-onboard') activeGame = null;
+}
+function goHome() { renderHome(); show('scr-home'); }
+function quitGame() {
+  if (activeGame && !confirm('Прервать игру? Очки за неё не сохранятся.')) return;
+  stopQuizTimer();
+  goHome();
+}
+
+/* =================== МАСКОТЫ =================== */
+
+function mascotSVG(color, blushColor, flip, mood) {
+  let eyes, mouth, extra = '';
+  if (mood === 'happy') {
+    // зажмуренные от радости глаза-дуги и широкая улыбка
+    eyes = `<path d="M40,61 Q46,53 52,61" stroke="#3D2C52" stroke-width="4" stroke-linecap="round" fill="none"/>
+            <path d="M68,61 Q74,53 80,61" stroke="#3D2C52" stroke-width="4" stroke-linecap="round" fill="none"/>`;
+    mouth = `<path d="M49,70 Q60,84 71,70" stroke="#3D2C52" stroke-width="3.5" stroke-linecap="round" fill="none"/>`;
+    extra = `<text x="94" y="46" font-size="16">💕</text>`;
+  } else if (mood === 'sad') {
+    // грустные глаза, перевёрнутая улыбка и слезинка
+    eyes = `<circle cx="46" cy="61" r="4.5" fill="#3D2C52"/>
+            <circle cx="74" cy="61" r="4.5" fill="#3D2C52"/>
+            <circle cx="47.2" cy="59.8" r="1.4" fill="#fff"/>
+            <circle cx="75.2" cy="59.8" r="1.4" fill="#fff"/>`;
+    mouth = `<path d="M52,78 Q60,70 68,78" stroke="#3D2C52" stroke-width="3.5" stroke-linecap="round" fill="none"/>`;
+    extra = `<ellipse cx="39" cy="71" rx="2.6" ry="3.6" fill="#7EC8FF"/>`;
+  } else {
+    eyes = `<circle cx="46" cy="60" r="5" fill="#3D2C52"/>
+            <circle cx="74" cy="60" r="5" fill="#3D2C52"/>
+            <circle cx="47.5" cy="58.5" r="1.6" fill="#fff"/>
+            <circle cx="75.5" cy="58.5" r="1.6" fill="#fff"/>`;
+    mouth = `<path d="M52,72 Q60,79 68,72" stroke="#3D2C52" stroke-width="3.5" stroke-linecap="round" fill="none"/>`;
+  }
+  return `<svg width="92" height="100" viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg" ${flip ? 'style="transform:scaleX(-1)"' : ''}>
+    <path d="M20,95 L20,58 A40,40 0 0 1 100,58 L100,95
+             Q93.3,108 86.7,95 Q80,108 73.3,95 Q66.7,108 60,95
+             Q53.3,108 46.7,95 Q40,108 33.3,95 Q26.7,108 20,95 Z"
+          fill="${color}"/>
+    ${eyes}
+    ${mouth}
+    <circle cx="36" cy="70" r="6" fill="${blushColor}" opacity=".55"/>
+    <circle cx="84" cy="70" r="6" fill="${blushColor}" opacity=".55"/>
+    ${extra}
+    <ellipse cx="60" cy="122" rx="26" ry="4" fill="#3D2C52" opacity=".08"/>
+  </svg>`;
+}
+function renderMascots() {
+  const m1 = mascotSVG('#FFA8C2', '#FF5C8A', false);
+  const m2 = mascotSVG('#BCA6FF', '#7C5CFC', true);
+  ['mascot1','mascot1h'].forEach(id => { if ($(id)) $(id).innerHTML = m1; });
+  ['mascot2','mascot2h'].forEach(id => { if ($(id)) $(id).innerHTML = m2; });
+}
+function turnMascotSVG(playerIdx, mood) {
+  return playerIdx === 0 ? mascotSVG('#FFA8C2', '#FF5C8A', false, mood) : mascotSVG('#BCA6FF', '#7C5CFC', true, mood);
+}
+
+function renderDecor() {
+  const icons = ['💜','💖','✨','☁️','⭐','💫'];
+  let html = '';
+  for (let i = 0; i < 14; i++) {
+    const e = icons[i % icons.length];
+    html += `<span style="left:${(i * 47 + 13) % 95}%;top:${(i * 31 + 7) % 92}%;animation-delay:${(i % 7) * -1.7}s;font-size:${16 + (i % 3) * 8}px">${e}</span>`;
+  }
+  $('bgDecor').innerHTML = html;
+}
+
+/* =================== ОНБОРДИНГ =================== */
+
+let pick1 = S.p1.emoji, pick2 = S.p2.emoji;
+
+function renderEmojiRows() {
+  [[1, pick1], [2, pick2]].forEach(([n, sel]) => {
+    $('emojiRow' + n).innerHTML = EMOJIS.map(e =>
+      `<button class="${e === sel ? 'sel' : ''}" onclick="pickEmoji(${n},'${e}')">${e}</button>`
+    ).join('');
+  });
+}
+function pickEmoji(n, e) {
+  if (n === 1) pick1 = e; else pick2 = e;
+  renderEmojiRows();
+}
+function editPair() {
+  $('name1').value = S.p1.name;
+  $('name2').value = S.p2.name;
+  pick1 = S.p1.emoji; pick2 = S.p2.emoji;
+  renderEmojiRows();
+  show('scr-onboard');
+}
+function savePair() {
+  const n1 = $('name1').value.trim(), n2 = $('name2').value.trim();
+  if (!n1 || !n2) { alert('Введите оба имени 🙂'); return; }
+  S.p1 = {name: n1, emoji: pick1};
+  S.p2 = {name: n2, emoji: pick2};
+  save();
+  goHome();
+}
+
+/* =================== ГЛАВНАЯ =================== */
+
+function playerTag(p) { return `${p.emoji} ${esc(p.name)}`; }
+
+function renderHome() {
+  $('pairChip').innerHTML = `${playerTag(S.p1)} <span class="amp">💜</span> ${playerTag(S.p2)}`;
+  $('homeScore').textContent = S.score.toLocaleString('ru-RU');
+  $('homeGames').textContent = 'игр сыграно: ' + S.games;
+  if (S.kmBest >= 0) {
+    $('kmBestBadge').style.display = 'block';
+    $('kmBestBadge').textContent = `Лучший результат: ${S.kmBest}% совпадений`;
+  }
+  if (S.quizBest >= 0) {
+    $('quizBestBadge').style.display = 'block';
+    $('quizBestBadge').textContent = `Рекорд: ${S.quizBest} очков`;
+  }
+}
+
+/* =================== УЗНАЙ МЕНЯ =================== */
+
+let kmDiff = 'mix';
+let km = null;
+
+function goKmSetup() {
+  $('kmDiffList').innerHTML = KM_DIFFS.map(d => `
+    <div class="opt ${d.id === kmDiff ? 'sel' : ''}" onclick="setKmDiff('${d.id}')">
+      <div class="o-emoji">${d.e}</div>
+      <div><div class="o-name">${d.n}</div><div class="o-sub">${d.s}</div></div>
+    </div>`).join('');
+  show('scr-km-setup');
+}
+function setKmDiff(id) { kmDiff = id; goKmSetup(); }
+
+function startKm() {
+  const pool = kmDiff === 'mix' ? KM_Q.filter(q => q.d < 4)
+             : kmDiff === 'hot' ? KM_Q.filter(q => q.d === 4)
+             : KM_Q.filter(q => q.d === Number(kmDiff));
+  km = {
+    deck: shuffle(pool).slice(0, 10),
+    i: 0,
+    answerer: Math.random() < .5 ? 0 : 1, // 0 = p1, 1 = p2
+    correct: 0,
+    per: [0, 0],        // верных у каждого
+    perTotal: [0, 0],   // всего вопросов у каждого
+    score: 0,
+  };
+  activeGame = 'km';
+  kmLock = false;
+  renderKmRound();
+  show('scr-km-game');
+}
+
+function kmPlayers() {
+  const a = km.answerer === 0 ? S.p1 : S.p2;
+  const b = km.answerer === 0 ? S.p2 : S.p1;
+  return [a, b];
+}
+
+function renderKmRound() {
+  const q = km.deck[km.i];
+  const [ans, judge] = kmPlayers();
+  $('kmRound').textContent = `Раунд ${km.i + 1}/${km.deck.length}`;
+  $('kmProgress').style.width = ((km.i + 1) / km.deck.length * 100) + '%';
+  $('kmScore').textContent = '⭐ ' + km.score;
+  const tb = $('kmTurn');
+  tb.className = 'turn-banner ' + (km.answerer === 0 ? 'rose' : 'violet');
+  tb.innerHTML = `Отвечает ${playerTag(ans)}`;
+  $('kmAvatar').innerHTML = turnMascotSVG(km.answerer);
+  $('kmPts').textContent = `+${KM_PTS[q.d]} очков`;
+  $('kmQuestion').textContent = q.t;
+  $('kmJudgeHint').innerHTML = `${playerTag(judge)}, честно оцени ответ 😉`;
+}
+
+let kmLock = false;
+function kmJudge(ok) {
+  if (kmLock) return;
+  kmLock = true;
+  const q = km.deck[km.i];
+  km.perTotal[km.answerer]++;
+  if (ok) {
+    km.correct++;
+    km.per[km.answerer]++;
+    km.score += KM_PTS[q.d];
+    floatPts('+' + KM_PTS[q.d]);
+  }
+  // реакция маскота на вердикт
+  const av = $('kmAvatar');
+  av.innerHTML = turnMascotSVG(km.answerer, ok ? 'happy' : 'sad');
+  av.classList.add(ok ? 'react-happy' : 'react-sad');
+  $('kmScore').textContent = '⭐ ' + km.score;
+  setTimeout(() => {
+    av.classList.remove('react-happy', 'react-sad');
+    kmLock = false;
+    if (activeGame !== 'km') return; // игру прервали во время реакции
+    km.i++;
+    km.answerer = 1 - km.answerer;
+    if (km.i < km.deck.length) {
+      renderKmRound();
+    } else {
+      finishKm();
+    }
+  }, 900);
+}
+
+function kmTitle(p) {
+  if (p >= 90) return ['🔮', 'Вы — телепаты!', 'Кажется, вы читаете мысли друг друга.'];
+  if (p >= 70) return ['💞', 'Родственные души', 'Вы отлично чувствуете друг друга!'];
+  if (p >= 50) return ['🤝', 'Крепкая команда', 'Хорошая база — а дальше только интереснее.'];
+  if (p >= 30) return ['🌱', 'Всё впереди!', 'Столько всего ещё предстоит узнать друг о друге.'];
+  return ['🚀', 'Начало пути', 'Играйте чаще — и удивляйтесь открытиям!'];
+}
+
+function finishKm() {
+  activeGame = null;
+  const pct = Math.round(km.correct / km.deck.length * 100);
+  const [e, title, sub] = kmTitle(pct);
+  $('kmrEmoji').textContent = e;
+  $('kmrTitle').textContent = title;
+  $('kmrSub').textContent = sub + ` Вы совпали в ${km.correct} из ${km.deck.length} ответов.`;
+  $('kmrScore').textContent = '+' + km.score + ' очков';
+  $('kmrRows').innerHTML = `
+    <div class="stat-row"><span>Совпадения пары</span><span class="sr-val">${pct}%</span></div>
+    <div class="stat-row"><span>${playerTag(S.p1)} знает половинку</span><span class="sr-val">${km.per[0]}/${km.perTotal[0]}</span></div>
+    <div class="stat-row"><span>${playerTag(S.p2)} знает половинку</span><span class="sr-val">${km.per[1]}/${km.perTotal[1]}</span></div>`;
+  S.score += km.score;
+  S.games++;
+  if (pct > S.kmBest) S.kmBest = pct;
+  save();
+  show('scr-km-result');
+  if (pct >= 70) confetti();
+}
+
+/* =================== ВИКТОРИНА =================== */
+
+let quizTopic = 'mix';
+let qz = null;
+let qzTimer = null;
+
+function goQuizSetup() {
+  $('quizTopics').innerHTML = QUIZ_TOPICS.map(t =>
+    `<button class="chip ${t.id === quizTopic ? 'sel' : ''}" onclick="setQuizTopic('${t.id}')">${t.e} ${t.n}</button>`
+  ).join('');
+  show('scr-quiz-setup');
+}
+function setQuizTopic(id) { quizTopic = id; goQuizSetup(); }
+
+function startQuiz() {
+  const pool = quizTopic === 'mix' ? QUIZ_Q : QUIZ_Q.filter(q => q.t === quizTopic);
+  const deck = shuffle(pool).slice(0, 10);
+  const bonusCount = Math.max(2, Math.round(deck.length * 0.3));
+  const bonusIdx = new Set(shuffle(deck.map((_, i) => i)).slice(0, bonusCount));
+  qz = { deck, bonusIdx, i: 0, score: 0, correct: 0, locked: false };
+  activeGame = 'quiz';
+  renderQuizRound();
+  show('scr-quiz-game');
+}
+
+function renderQuizRound() {
+  const q = qz.deck[qz.i];
+  const bonus = qz.bonusIdx.has(qz.i);
+  qz.locked = false;
+  $('qzRound').textContent = `Вопрос ${qz.i + 1}/${qz.deck.length}`;
+  $('qzProgress').style.width = ((qz.i + 1) / qz.deck.length * 100) + '%';
+  $('qzScore').textContent = '⭐ ' + qz.score;
+  $('qzQuestion').textContent = q.q;
+  $('qzVerdict').textContent = '';
+  $('qzNextBtn').style.display = 'none';
+
+  const correctText = q.a[0];
+  const opts = shuffle(q.a);
+  $('qzAnswers').innerHTML = opts.map(o =>
+    `<button class="ans" data-ok="${o === correctText ? 1 : 0}" onclick="quizAnswer(this)">${esc(o)}</button>`
+  ).join('');
+
+  const bw = $('qzBonusWrap');
+  if (bonus) {
+    bw.style.display = 'block';
+    const fill = $('qzTimerFill');
+    fill.style.transition = 'none';
+    fill.style.width = '100%';
+    void fill.offsetWidth; // перезапуск анимации
+    fill.style.transition = 'width 15s linear';
+    fill.style.width = '0%';
+    qzTimer = setTimeout(quizTimeout, 15000);
+  } else {
+    bw.style.display = 'none';
+  }
+}
+
+function stopQuizTimer() {
+  if (qzTimer) { clearTimeout(qzTimer); qzTimer = null; }
+  const fill = $('qzTimerFill');
+  if (fill) {
+    const w = getComputedStyle(fill).width;
+    fill.style.transition = 'none';
+    fill.style.width = w;
+  }
+}
+
+function quizAnswer(btn) {
+  if (qz.locked) return;
+  qz.locked = true;
+  stopQuizTimer();
+  const bonus = qz.bonusIdx.has(qz.i);
+  const ok = btn.dataset.ok === '1';
+  document.querySelectorAll('#qzAnswers .ans').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.ok === '1') b.classList.add('correct');
+    else if (b === btn) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  if (ok) {
+    const pts = bonus ? 200 : 100;
+    qz.score += pts;
+    qz.correct++;
+    $('qzScore').textContent = '⭐ ' + qz.score;
+    $('qzVerdict').textContent = bonus ? `Огонь! +${pts} 🔥` : `Верно! +${pts} 🎉`;
+    $('qzVerdict').style.color = 'var(--green)';
+    floatPts('+' + pts);
+  } else {
+    $('qzVerdict').textContent = 'Мимо! Но вы всё равно классные 💜';
+    $('qzVerdict').style.color = 'var(--red)';
+  }
+  $('qzNextBtn').style.display = 'block';
+}
+
+function quizTimeout() {
+  if (qz.locked) return;
+  qz.locked = true;
+  qzTimer = null;
+  document.querySelectorAll('#qzAnswers .ans').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.ok === '1') b.classList.add('correct');
+    else b.classList.add('dim');
+  });
+  $('qzVerdict').textContent = 'Время вышло! ⏰';
+  $('qzVerdict').style.color = 'var(--red)';
+  $('qzNextBtn').style.display = 'block';
+}
+
+function quizNext() {
+  qz.i++;
+  if (qz.i < qz.deck.length) renderQuizRound();
+  else finishQuiz();
+}
+
+function quizTitle(p) {
+  if (p >= 90) return ['🧠', 'Гении вдвоём!', 'Вашей эрудиции можно только позавидовать.'];
+  if (p >= 70) return ['✨', 'Блестящая пара', 'Вместе вы почти непобедимы!'];
+  if (p >= 50) return ['💪', 'Крепкий дуэт', 'Отличная командная работа.'];
+  return ['💜', 'Главное — вместе', 'Очки — ерунда, зато весело!'];
+}
+
+function finishQuiz() {
+  activeGame = null;
+  stopQuizTimer();
+  const pct = Math.round(qz.correct / qz.deck.length * 100);
+  const [e, title, sub] = quizTitle(pct);
+  $('qzrEmoji').textContent = e;
+  $('qzrTitle').textContent = title;
+  $('qzrSub').textContent = `${sub} Верных ответов: ${qz.correct} из ${qz.deck.length}.`;
+  $('qzrScore').textContent = '+' + qz.score + ' очков';
+  const isRecord = qz.score > S.quizBest && S.quizBest >= 0;
+  $('qzrRecord').style.display = isRecord ? 'block' : 'none';
+  S.score += qz.score;
+  S.games++;
+  if (qz.score > S.quizBest) S.quizBest = qz.score;
+  save();
+  show('scr-quiz-result');
+  if (pct >= 70 || isRecord) confetti();
+}
+
+/* =================== КТО ИЗ ВАС? =================== */
+
+let who = null;
+const WHO_ROUNDS = 15;
+
+function startWho() {
+  who = { deck: shuffle(WHO_Q).slice(0, WHO_ROUNDS), i: 0 };
+  renderWho();
+  show('scr-who');
+}
+function renderWho() {
+  $('whoText').textContent = who.deck[who.i];
+  $('whoCount').textContent = `${who.i + 1} из ${who.deck.length}`;
+  $('whoNextBtn').textContent = who.i === who.deck.length - 1 ? 'Завершить 🎉' : 'Дальше →';
+}
+function whoNext() {
+  who.i++;
+  if (who.i < who.deck.length) {
+    renderWho();
+  } else {
+    confetti();
+    setTimeout(goHome, 500);
+  }
+}
+
+/* =================== ЭФФЕКТЫ =================== */
+
+function floatPts(text) {
+  const el = document.createElement('div');
+  el.className = 'float-pts';
+  el.textContent = text;
+  el.style.left = (window.innerWidth / 2 - 30 + (Math.random() * 40 - 20)) + 'px';
+  el.style.top = (window.innerHeight * 0.35) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+function confetti() {
+  const icons = ['💜','💖','💘','✨','🎉','⭐'];
+  for (let i = 0; i < 26; i++) {
+    const el = document.createElement('div');
+    el.className = 'conf';
+    el.textContent = icons[Math.floor(Math.random() * icons.length)];
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (16 + Math.random() * 16) + 'px';
+    el.style.animationDuration = (2.2 + Math.random() * 1.8) + 's';
+    el.style.animationDelay = (Math.random() * 0.6) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+}
+
+/* =================== СТАРТ =================== */
+
+renderDecor();
+renderMascots();
+renderEmojiRows();
+if (S.p1.name && S.p2.name) goHome();
+else show('scr-onboard');
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
