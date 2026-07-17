@@ -93,6 +93,16 @@
   }
   @keyframes drift { from { transform: translateY(0) rotate(-8deg); } to { transform: translateY(-24px) rotate(8deg); } }
 
+  /* ---------- звёздная пыль (только тёмная тема) ---------- */
+  .star-field { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; display: none; }
+  :root[data-theme="dark"] .star-field { display: block; }
+  .star-field span {
+    position: absolute; border-radius: 50%; background: #fff;
+    box-shadow: 0 0 6px 1px rgba(255,255,255,.85);
+    animation: twinkle ease-in-out infinite;
+  }
+  @keyframes twinkle { 0%, 100% { opacity: .2; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+
   /* ---------- экраны ---------- */
   .screen { display: none; position: relative; z-index: 1; }
   .screen.active { display: flex; flex-direction: column; flex: 1 1 auto; animation: pop .5s var(--ease-smooth); }
@@ -341,6 +351,7 @@
 </head>
 <body>
 <div class="bg-decor" id="bgDecor"></div>
+<div class="star-field" id="starField"></div>
 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Переключить тему">🌙</button>
 <main>
 
@@ -1411,6 +1422,19 @@ function renderDecor() {
   $('bgDecor').innerHTML = html;
 }
 
+function renderStars() {
+  let html = '';
+  for (let i = 0; i < 36; i++) {
+    const left = (i * 29 + 7) % 100;
+    const top = (i * 53 + 11) % 100;
+    const size = 1.5 + (i % 4) * 0.7;
+    const delay = (i % 10) * 0.4;
+    const duration = 2.4 + (i % 5) * 0.5;
+    html += `<span style="left:${left}%;top:${top}%;width:${size}px;height:${size}px;animation-delay:${delay}s;animation-duration:${duration}s"></span>`;
+  }
+  $('starField').innerHTML = html;
+}
+
 /* =================== ТЕМА =================== */
 
 const THEME_KEY = 'duet_theme';
@@ -1802,6 +1826,7 @@ function confetti() {
 /* =================== СТАРТ =================== */
 
 applyTheme(currentTheme);
+renderStars();
 renderMascots();
 renderEmojiRows();
 if (S.p1.name && S.p2.name) goHome();
