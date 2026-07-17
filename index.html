@@ -134,6 +134,12 @@
   @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
   .mascots .hearts { position: absolute; top: 0; left: 50%; transform: translateX(-50%); font-size: 20px; animation: pulseH 1.6s ease-in-out infinite; }
   @keyframes pulseH { 0%,100% { transform: translateX(-50%) scale(1); opacity: .9; } 50% { transform: translateX(-50%) scale(1.25); opacity: 1; } }
+  .lvl-badge {
+    font-family: var(--font-display); font-weight: 700; font-size: 46px; line-height: 1;
+    align-self: center; min-width: 32px; text-align: center;
+  }
+  .lvl-badge.lvl-p1 { color: var(--rose-deep); animation: float 3s ease-in-out .15s infinite; }
+  .lvl-badge.lvl-p2 { color: var(--violet-deep); animation: float 3s ease-in-out .75s infinite; }
 
   /* ---------- онбординг ---------- */
   .player-card { border-left: none; position: relative; }
@@ -326,9 +332,11 @@
   <!-- ============ ГЛАВНАЯ ============ -->
   <section id="scr-home" class="screen">
     <div class="mascots" style="margin-top:4px">
+      <div class="lvl-badge lvl-p1" id="lvlP1h">0</div>
       <div class="m1" id="mascot1h"></div>
       <div class="hearts">💞</div>
       <div class="m2" id="mascot2h"></div>
+      <div class="lvl-badge lvl-p2" id="lvlP2h">0</div>
     </div>
     <div class="pair-chip" id="pairChip"></div>
 
@@ -1018,6 +1026,10 @@ let S = load() || {
   p2: {name:'', emoji:'🐰'},
   score: 0, games: 0, kmBest: -1, quizBest: -1,
 };
+if (S.p1.lvl === undefined) S.p1.lvl = 0;
+if (S.p1.lvlPct === undefined) S.p1.lvlPct = 0;
+if (S.p2.lvl === undefined) S.p2.lvl = 0;
+if (S.p2.lvlPct === undefined) S.p2.lvlPct = 0;
 function load() {
   try { return JSON.parse(localStorage.getItem(KEY)); } catch(e) { return null; }
 }
@@ -1132,8 +1144,8 @@ function editPair() {
 function savePair() {
   const n1 = $('name1').value.trim(), n2 = $('name2').value.trim();
   if (!n1 || !n2) { alert('Введите оба имени 🙂'); return; }
-  S.p1 = {name: n1, emoji: pick1};
-  S.p2 = {name: n2, emoji: pick2};
+  S.p1 = {name: n1, emoji: pick1, lvl: S.p1.lvl || 0, lvlPct: S.p1.lvlPct || 0};
+  S.p2 = {name: n2, emoji: pick2, lvl: S.p2.lvl || 0, lvlPct: S.p2.lvlPct || 0};
   save();
   goHome();
 }
@@ -1146,6 +1158,8 @@ function renderHome() {
   $('pairChip').innerHTML = `${playerTag(S.p1)} <span class="amp">💜</span> ${playerTag(S.p2)}`;
   $('homeScore').textContent = S.score.toLocaleString('ru-RU');
   $('homeGames').textContent = 'игр сыграно: ' + S.games;
+  $('lvlP1h').textContent = S.p1.lvl;
+  $('lvlP2h').textContent = S.p2.lvl;
   if (S.kmBest >= 0) {
     $('kmBestBadge').style.display = 'block';
     $('kmBestBadge').textContent = `Лучший результат: ${S.kmBest}% совпадений`;
@@ -1265,9 +1279,19 @@ function finishKm() {
   S.score += km.score;
   S.games++;
   if (pct > S.kmBest) S.kmBest = pct;
+  addLevelProgress(S.p1, km.per[0]);
+  addLevelProgress(S.p2, km.per[1]);
   save();
   show('scr-km-result');
   if (pct >= 70) confetti();
+}
+
+function addLevelProgress(player, correctCount) {
+  player.lvlPct += correctCount * 5;
+  while (player.lvlPct >= 100) {
+    player.lvlPct -= 100;
+    player.lvl++;
+  }
 }
 
 /* =================== ВИКТОРИНА =================== */
