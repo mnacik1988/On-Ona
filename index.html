@@ -1413,11 +1413,13 @@ function turnMascotSVG(playerIdx, mood) {
 function renderDecor() {
   const dayIcons = ['☀️','☁️','✨','💕','☁️','✨'];
   const nightIcons = ['🌙','⭐','✨','💫','⭐','💕'];
-  const icons = currentTheme === 'dark' ? nightIcons : dayIcons;
+  const isDark = currentTheme === 'dark';
+  const icons = isDark ? nightIcons : dayIcons;
+  const count = isDark ? 14 : 20;
   let html = '';
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < count; i++) {
     const e = icons[i % icons.length];
-    html += `<span style="left:${(i * 47 + 13) % 95}%;top:${(i * 31 + 7) % 92}%;animation-delay:${(i % 7) * -1.7}s;font-size:${16 + (i % 3) * 8}px">${e}</span>`;
+    html += `<span style="left:${(i * 43 + 11) % 95}%;top:${(i * 27 + 7) % 92}%;animation-delay:${(i % 7) * -1.7}s;font-size:${16 + (i % 3) * 8}px">${e}</span>`;
   }
   $('bgDecor').innerHTML = html;
 }
