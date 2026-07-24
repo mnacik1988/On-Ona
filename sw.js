@@ -1,6 +1,6 @@
 'use strict';
-var CACHE = 'on-ona-shell-v1';
-var SHELL = ['./index.html', './manifest.json', './icon.png', './icon-maskable.png', './apple-touch-icon.png', './sw.js'];
+var CACHE = 'on-ona-shell-v2';
+var SHELL = ['./index.html', './questions-1.js', './manifest.json', './icon.png', './icon-maskable.png', './apple-touch-icon.png', './sw.js'];
 
 /* ── Install: кешируем приложение ── */
 self.addEventListener('install', function(e){
