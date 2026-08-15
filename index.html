@@ -330,12 +330,12 @@
   .stat-row .sr-val { font-weight: 800; }
   .record-flash { text-align: center; color: var(--amber); font-weight: 800; font-size: 15px; margin-top: 12px; }
 
-  /* «Кто из вас?» */
-  .who-card { text-align: center; padding: 40px 24px; min-height: 260px; display: flex; flex-direction: column; justify-content: center; }
-  .who-label { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--rose); }
-  .who-text { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.35; margin-top: 14px; }
-  .who-hint { font-size: 14px; color: var(--muted); margin-top: 18px; }
-  .who-count { text-align: center; font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 14px; }
+  /* «Мини-квест дня» — карточка с одним промптом */
+  .prompt-card { text-align: center; padding: 40px 24px; min-height: 260px; display: flex; flex-direction: column; justify-content: center; }
+  .prompt-label { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--rose); }
+  .prompt-text { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1.35; margin-top: 14px; }
+  .prompt-hint { font-size: 14px; color: var(--muted); margin-top: 18px; }
+  .prompt-count { text-align: center; font-size: 13px; font-weight: 700; color: var(--muted); margin-top: 14px; }
 
   /* очки-всплывашка и конфетти */
   .float-pts {
@@ -417,11 +417,20 @@
       <div class="arrow">›</div>
     </div>
 
-    <div class="card mode-card" onclick="startWho()">
-      <div class="mode-icon" style="background:var(--cream-soft)">👉</div>
+    <div class="card mode-card" onclick="startQuest()">
+      <div class="mode-icon" style="background:var(--cream-soft)">🎯</div>
       <div>
-        <h3>Кто из вас?</h3>
-        <p>Весёлые вопросы без правильных ответов — просто показывайте друг на друга!</p>
+        <h3>Мини-квест дня</h3>
+        <p>Лёгкие задания на сближение — сделайте их прямо сейчас, вдвоём!</p>
+      </div>
+      <div class="arrow">›</div>
+    </div>
+
+    <div class="card mode-card" onclick="startPhrase()">
+      <div class="mode-icon" style="background:var(--green-soft)">💬</div>
+      <div>
+        <h3>Дополни фразу</h3>
+        <p>Угадайте, как партнёр закончит фразу о себе. Проверьте, чувствуете ли вы друг друга!</p>
       </div>
       <div class="arrow">›</div>
     </div>
@@ -539,27 +548,70 @@
     <button class="btn secondary" onclick="goHome()">На главную</button>
   </section>
 
-  <!-- ============ КТО ИЗ ВАС? ============ -->
-  <section id="scr-who" class="screen">
+  <!-- ============ МИНИ-КВЕСТ ДНЯ ============ -->
+  <section id="scr-quest" class="screen">
     <div class="topbar">
       <button class="icon-btn" onclick="show('scr-home')">←</button>
-      <div class="title">👉 Кто из вас?</div>
+      <div class="title">🎯 Мини-квест дня</div>
     </div>
 
-    <div class="card who-card" id="whoCard">
-      <div class="who-label">Кто из вас скорее…</div>
-      <div class="who-text" id="whoText"></div>
-      <div class="who-hint">На счёт «три» покажите пальцем друг на друга! 👉👈</div>
+    <div class="card prompt-card" id="questCard">
+      <div class="prompt-label">Квест дня</div>
+      <div class="prompt-text" id="questText"></div>
+      <div class="prompt-hint">Сделайте это прямо сейчас, а потом жмите «Выполнено» 💫</div>
     </div>
-    <div class="who-count" id="whoCount"></div>
-    <button class="btn" id="whoNextBtn" onclick="whoNext()">Дальше →</button>
+    <div class="prompt-count" id="questCount"></div>
+    <button class="btn" id="questNextBtn" onclick="questNext()">Выполнено ✓</button>
+  </section>
+
+  <!-- ============ ДОПОЛНИ ФРАЗУ: ИГРА ============ -->
+  <section id="scr-ph-game" class="screen">
+    <div class="game-top">
+      <button class="icon-btn" onclick="quitGame()">✕</button>
+      <div class="progress-wrap">
+        <div class="progress-label" id="phRound">Раунд 1/10</div>
+        <div class="progress-bar"><i id="phProgress" style="width:10%"></i></div>
+      </div>
+      <div class="score-pill" id="phScore">⭐ 0</div>
+    </div>
+
+    <div class="game-body">
+      <div class="turn-banner rose" id="phTurn"></div>
+      <div class="turn-avatar" id="phAvatar"></div>
+
+      <div class="card q-card">
+        <div class="q-label" id="phSubjectLabel"></div>
+        <div class="q-text" id="phQuestion"></div>
+        <div class="q-hint" id="phHint"></div>
+      </div>
+
+      <div class="judge-row">
+        <button class="j-no" onclick="phJudge(false)">✗ Не угадал(а)</button>
+        <button class="j-yes" onclick="phJudge(true)">✓ Угадал(а)!</button>
+      </div>
+      <p class="setup-note" id="phJudgeHint"></p>
+    </div>
+  </section>
+
+  <!-- ============ ДОПОЛНИ ФРАЗУ: РЕЗУЛЬТАТ ============ -->
+  <section id="scr-ph-result" class="screen">
+    <div class="card result-hero">
+      <div class="r-emoji" id="phrEmoji">💬</div>
+      <div class="r-title" id="phrTitle"></div>
+      <div class="r-sub" id="phrSub"></div>
+      <div class="r-score" id="phrScore"></div>
+    </div>
+    <div class="stat-rows" id="phrRows"></div>
+    <button class="btn" onclick="startPhrase()">Сыграть ещё 💬</button>
+    <button class="btn secondary" onclick="goHome()">На главную</button>
   </section>
 
 </main>
 
-<script>var KM_Q = [], QUIZ_Q = [], WHO_Q = [];</script>
+<script>var KM_Q = [], QUIZ_Q = [], WHO_Q = [], QUEST_Q = [], PHRASE_Q = [];</script>
 <script src="questions-1.js"></script>
 <script src="questions-2.js"></script>
+<script src="questions-3.js"></script>
 <script>
 /* =================== ДАННЫЕ =================== */
 
@@ -593,8 +645,13 @@ const QUIZ_TOPICS = [
 ];
 // QUIZ_Q заполняется из внешних файлов баз вопросов (questions-1.js и т.д., подключены выше)
 
-/* «Кто из вас?» — продолжение фразы «Кто из вас скорее…» */
-// WHO_Q заполняется из внешних файлов баз вопросов (questions-1.js и т.д., подключены выше)
+/* «Мини-квест дня»: короткие задания на сближение */
+// QUEST_Q заполняется из внешних файлов баз вопросов (questions-3.js и т.д., подключены выше)
+const QUEST_ROUNDS = 7;
+
+/* «Дополни фразу»: фраза от первого лица, угадывающий озвучивает окончание */
+// PHRASE_Q заполняется из внешних файлов баз вопросов (questions-3.js и т.д., подключены выше)
+const PH_PTS = 80;
 
 /* =================== СОСТОЯНИЕ =================== */
 
@@ -1050,29 +1107,126 @@ function finishQuiz() {
   if (pct >= 70 || isRecord) confetti();
 }
 
-/* =================== КТО ИЗ ВАС? =================== */
+/* =================== МИНИ-КВЕСТ ДНЯ =================== */
 
-let who = null;
-const WHO_ROUNDS = 15;
+let quest = null;
 
-function startWho() {
-  who = { deck: shuffle(WHO_Q).slice(0, WHO_ROUNDS), i: 0 };
-  renderWho();
-  show('scr-who');
+function startQuest() {
+  quest = { deck: shuffle(QUEST_Q).slice(0, QUEST_ROUNDS), i: 0 };
+  renderQuest();
+  show('scr-quest');
 }
-function renderWho() {
-  $('whoText').textContent = who.deck[who.i];
-  $('whoCount').textContent = `${who.i + 1} из ${who.deck.length}`;
-  $('whoNextBtn').textContent = who.i === who.deck.length - 1 ? 'Завершить 🎉' : 'Дальше →';
+function renderQuest() {
+  $('questText').textContent = quest.deck[quest.i];
+  $('questCount').textContent = `${quest.i + 1} из ${quest.deck.length}`;
+  $('questNextBtn').textContent = quest.i === quest.deck.length - 1 ? 'Завершить 🎉' : 'Выполнено ✓';
 }
-function whoNext() {
-  who.i++;
-  if (who.i < who.deck.length) {
-    renderWho();
+function questNext() {
+  quest.i++;
+  if (quest.i < quest.deck.length) {
+    renderQuest();
   } else {
     confetti();
     setTimeout(goHome, 500);
   }
+}
+
+/* =================== ДОПОЛНИ ФРАЗУ =================== */
+
+let ph = null;
+
+function startPhrase() {
+  ph = {
+    deck: shuffle(PHRASE_Q).slice(0, 10),
+    i: 0,
+    answerer: Math.random() < .5 ? 0 : 1, // 0 = p1, 1 = p2 — кто угадывает вслух
+    correct: 0,
+    per: [0, 0],
+    perTotal: [0, 0],
+    score: 0,
+  };
+  activeGame = 'ph';
+  phLock = false;
+  renderPhraseRound();
+  show('scr-ph-game');
+}
+
+function phPlayers() {
+  const guesser = ph.answerer === 0 ? S.p1 : S.p2;
+  const subject = ph.answerer === 0 ? S.p2 : S.p1;
+  return [guesser, subject];
+}
+
+function renderPhraseRound() {
+  const [guesser, subject] = phPlayers();
+  $('phRound').textContent = `Раунд ${ph.i + 1}/${ph.deck.length}`;
+  $('phProgress').style.width = ((ph.i + 1) / ph.deck.length * 100) + '%';
+  $('phScore').textContent = '⭐ ' + ph.score;
+  const tb = $('phTurn');
+  tb.className = 'turn-banner ' + (ph.answerer === 0 ? 'rose' : 'violet');
+  tb.innerHTML = `Угадывает ${playerTag(guesser)}`;
+  $('phAvatar').innerHTML = turnMascotSVG(ph.answerer);
+  $('phSubjectLabel').textContent = `${subject.name}: угадываем фразу`;
+  $('phQuestion').textContent = ph.deck[ph.i];
+  $('phHint').textContent = `${playerTag(guesser)}, закончи фразу вслух — как думаешь, что скажет ${subject.name}?`;
+  $('phJudgeHint').innerHTML = `${playerTag(subject)}, честно оцени: угадал(а) ли партнёр?`;
+}
+
+let phLock = false;
+function phJudge(ok) {
+  if (phLock) return;
+  phLock = true;
+  ph.perTotal[ph.answerer]++;
+  if (ok) {
+    ph.correct++;
+    ph.per[ph.answerer]++;
+    ph.score += PH_PTS;
+    floatPts('+' + PH_PTS);
+  }
+  const av = $('phAvatar');
+  av.innerHTML = turnMascotSVG(ph.answerer, ok ? 'happy' : 'sad');
+  av.classList.add(ok ? 'react-happy' : 'react-sad');
+  $('phScore').textContent = '⭐ ' + ph.score;
+  setTimeout(() => {
+    av.classList.remove('react-happy', 'react-sad');
+    phLock = false;
+    if (activeGame !== 'ph') return;
+    ph.i++;
+    ph.answerer = 1 - ph.answerer;
+    if (ph.i < ph.deck.length) {
+      renderPhraseRound();
+    } else {
+      finishPhrase();
+    }
+  }, 900);
+}
+
+function phraseTitle(p) {
+  if (p >= 90) return ['💫', 'Вы на одной волне!', 'Кажется, вы читаете мысли друг друга.'];
+  if (p >= 70) return ['💬', 'Отлично чувствуете друг друга', 'Вы правда хорошо друг друга знаете!'];
+  if (p >= 50) return ['🤝', 'Неплохо!', 'Есть куда расти, и это только интереснее.'];
+  return ['🌱', 'Есть, что обсудить', 'Похоже, вам будет о чём поговорить после игры!'];
+}
+
+function finishPhrase() {
+  activeGame = null;
+  const pct = Math.round(ph.correct / ph.deck.length * 100);
+  const [e, title, sub] = phraseTitle(pct);
+  $('phrEmoji').textContent = e;
+  $('phrTitle').textContent = title;
+  $('phrSub').textContent = sub + ` Угадано ${ph.correct} из ${ph.deck.length} фраз.`;
+  $('phrScore').textContent = '+' + ph.score + ' очков';
+  $('phrRows').innerHTML = `
+    <div class="stat-row"><span>Совпадения пары</span><span class="sr-val">${pct}%</span></div>
+    <div class="stat-row"><span>${playerTag(S.p1)} угадывает половинку</span><span class="sr-val">${ph.per[0]}/${ph.perTotal[0]}</span></div>
+    <div class="stat-row"><span>${playerTag(S.p2)} угадывает половинку</span><span class="sr-val">${ph.per[1]}/${ph.perTotal[1]}</span></div>`;
+  S.score += ph.score;
+  S.games++;
+  addLevelProgress(S.p1, ph.per[0]);
+  addLevelProgress(S.p2, ph.per[1]);
+  save();
+  show('scr-ph-result');
+  if (pct >= 70) confetti();
 }
 
 /* =================== ЭФФЕКТЫ =================== */
