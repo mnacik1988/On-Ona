@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Дуэт">
+<meta name="apple-mobile-web-app-title" content="Boo &amp; Boo">
 <meta name="theme-color" content="#FFEFF4">
-<title>Дуэт — игра для двоих</title>
+<title>Boo &amp; Boo — игра для двоих</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon.png">
@@ -168,6 +168,15 @@
     transition: transform .2s var(--ease-soft), background-color .35s ease;
   }
   .theme-toggle:active { transform: scale(.9); }
+  .lang-toggle {
+    position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 66px; z-index: 40;
+    min-width: 42px; height: 42px; padding: 0 12px; border-radius: 999px; border: none; cursor: pointer;
+    background: var(--card); box-shadow: var(--shadow); color: var(--ink);
+    font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: .5px;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s var(--ease-soft), background-color .35s ease;
+  }
+  .lang-toggle:active { transform: scale(.9); }
   .icon-btn:active { transform: scale(.9); }
   .topbar .title { font-family: var(--font-display); font-size: 19px; font-weight: 600; }
   .spacer { flex: 1; }
@@ -352,6 +361,7 @@
 <body>
 <div class="bg-decor" id="bgDecor"></div>
 <div class="star-field" id="starField"></div>
+<button class="lang-toggle" id="langToggle" onclick="cycleLang()" aria-label="Сменить язык">RU</button>
 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Переключить тему">🌙</button>
 <main>
 
@@ -362,22 +372,22 @@
       <div class="hearts">💞</div>
       <div class="m2" id="mascot2"></div>
     </div>
-    <h1>Дуэт</h1>
-    <p class="tagline">Игра для двоих на одном телефоне.<br>Узнайте друг друга ещё ближе!</p>
+    <h1 data-i18n="appTitle">Boo &amp; Boo</h1>
+    <p class="tagline" data-i18n-html="tagline">Игра для двоих на одном телефоне.<br>Узнайте друг друга ещё ближе!</p>
 
     <div class="card player-card rose">
-      <div class="pc-label">Игрок 1</div>
+      <div class="pc-label" data-i18n="player1">Игрок 1</div>
       <div class="emoji-row" id="emojiRow1"></div>
-      <input class="name-input" id="name1" type="text" maxlength="14" placeholder="Имя" autocomplete="off">
+      <input class="name-input" id="name1" type="text" maxlength="14" data-i18n-ph="namePh" placeholder="Имя" autocomplete="off">
     </div>
 
     <div class="card player-card violet">
-      <div class="pc-label">Игрок 2</div>
+      <div class="pc-label" data-i18n="player2">Игрок 2</div>
       <div class="emoji-row" id="emojiRow2"></div>
-      <input class="name-input" id="name2" type="text" maxlength="14" placeholder="Имя" autocomplete="off">
+      <input class="name-input" id="name2" type="text" maxlength="14" data-i18n-ph="namePh" placeholder="Имя" autocomplete="off">
     </div>
 
-    <button class="btn" onclick="savePair()">Погнали! 💫</button>
+    <button class="btn" onclick="savePair()" data-i18n="go">Погнали! 💫</button>
   </section>
 
   <!-- ============ ГЛАВНАЯ ============ -->
@@ -392,7 +402,7 @@
     <div class="pair-chip" id="pairChip"></div>
 
     <div class="score-banner">
-      <div class="sb-label">Очки пары</div>
+      <div class="sb-label" data-i18n="scoreLabel">Очки пары</div>
       <div class="sb-value" id="homeScore">0</div>
       <div class="sb-sub" id="homeGames">игр сыграно: 0</div>
     </div>
@@ -400,8 +410,8 @@
     <div class="card mode-card" onclick="goKmSetup()">
       <div class="mode-icon" style="background:var(--rose-soft)">💗</div>
       <div>
-        <h3>Узнай меня</h3>
-        <p>Вопросы друг о друге по очереди. Проверьте, как хорошо вы знакомы!</p>
+        <h3 data-i18n="km.title">Узнай меня</h3>
+        <p data-i18n="km.desc">Вопросы друг о друге по очереди. Проверьте, как хорошо вы знакомы!</p>
         <div class="badge" id="kmBestBadge" style="display:none"></div>
       </div>
       <div class="arrow">›</div>
@@ -410,8 +420,8 @@
     <div class="card mode-card" onclick="goQuizSetup()">
       <div class="mode-icon" style="background:var(--violet-soft)">🏆</div>
       <div>
-        <h3>Викторина вдвоём</h3>
-        <p>Отвечайте вместе! 4 варианта ответа и огненные бонус-раунды ×2 🔥</p>
+        <h3 data-i18n="quiz.title">Викторина вдвоём</h3>
+        <p data-i18n="quiz.desc">Отвечайте вместе! 4 варианта ответа и огненные бонус-раунды ×2 🔥</p>
         <div class="badge" id="quizBestBadge" style="display:none"></div>
       </div>
       <div class="arrow">›</div>
@@ -420,8 +430,8 @@
     <div class="card mode-card" onclick="startQuest()">
       <div class="mode-icon" style="background:var(--cream-soft)">🎯</div>
       <div>
-        <h3>Мини-квест дня</h3>
-        <p>Лёгкие задания на сближение — сделайте их прямо сейчас, вдвоём!</p>
+        <h3 data-i18n="quest.title">Мини-квест дня</h3>
+        <p data-i18n="quest.desc">Лёгкие задания на сближение — сделайте их прямо сейчас, вдвоём!</p>
       </div>
       <div class="arrow">›</div>
     </div>
@@ -429,28 +439,28 @@
     <div class="card mode-card" onclick="startPhrase()">
       <div class="mode-icon" style="background:var(--green-soft)">💬</div>
       <div>
-        <h3>Дополни фразу</h3>
-        <p>Угадайте, как партнёр закончит фразу о себе. Проверьте, чувствуете ли вы друг друга!</p>
+        <h3 data-i18n="ph.title">Дополни фразу</h3>
+        <p data-i18n="ph.desc">Угадайте, как партнёр закончит фразу о себе. Проверьте, чувствуете ли вы друг друга!</p>
       </div>
       <div class="arrow">›</div>
     </div>
 
-    <button class="link-btn" onclick="editPair()">✏️ Изменить имена</button>
-    <p class="footer-note">Сделано с 💜 для двоих</p>
+    <button class="link-btn" onclick="editPair()" data-i18n="editNames">✏️ Изменить имена</button>
+    <p class="footer-note" data-i18n="footer">Сделано с 💜 для двоих</p>
   </section>
 
   <!-- ============ УЗНАЙ МЕНЯ: НАСТРОЙКА ============ -->
   <section id="scr-km-setup" class="screen">
     <div class="topbar">
       <button class="icon-btn" onclick="show('scr-home')">←</button>
-      <div class="title">💗 Узнай меня</div>
+      <div class="title">💗 <span data-i18n="km.title">Узнай меня</span></div>
     </div>
 
-    <div class="q-label" style="margin-top:14px">Выберите сложность</div>
+    <div class="q-label" style="margin-top:14px" data-i18n="chooseDiff">Выберите сложность</div>
     <div class="opt-list" id="kmDiffList"></div>
 
-    <p class="setup-note">10 раундов — по 5 вопросов каждому.<br>Отвечаете вслух, а половинка честно оценивает 😉</p>
-    <button class="btn" onclick="startKm()">Начать игру</button>
+    <p class="setup-note" data-i18n-html="kmSetupNote">10 раундов — по 5 вопросов каждому.<br>Отвечаете вслух, а половинка честно оценивает 😉</p>
+    <button class="btn" onclick="startKm()" data-i18n="startGame">Начать игру</button>
   </section>
 
   <!-- ============ УЗНАЙ МЕНЯ: ИГРА ============ -->
@@ -471,12 +481,12 @@
       <div class="card q-card">
         <div class="q-label" id="kmPts">+100 очков</div>
         <div class="q-text" id="kmQuestion"></div>
-        <div class="q-hint">Отвечай вслух — не подглядывай! 🙈</div>
+        <div class="q-hint" data-i18n="answerAloud">Отвечай вслух — не подглядывай! 🙈</div>
       </div>
 
       <div class="judge-row">
-        <button class="j-no" onclick="kmJudge(false)">✗ Мимо</button>
-        <button class="j-yes" onclick="kmJudge(true)">✓ Верно!</button>
+        <button class="j-no" onclick="kmJudge(false)" data-i18n="miss">✗ Мимо</button>
+        <button class="j-yes" onclick="kmJudge(true)" data-i18n="right">✓ Верно!</button>
       </div>
       <p class="setup-note" id="kmJudgeHint"></p>
     </div>
@@ -491,22 +501,22 @@
       <div class="r-score" id="kmrScore"></div>
     </div>
     <div class="stat-rows" id="kmrRows"></div>
-    <button class="btn" onclick="goKmSetup()">Сыграть ещё 💗</button>
-    <button class="btn secondary" onclick="goHome()">На главную</button>
+    <button class="btn" onclick="goKmSetup()" data-i18n="playAgainKm">Сыграть ещё 💗</button>
+    <button class="btn secondary" onclick="goHome()" data-i18n="toHome">На главную</button>
   </section>
 
   <!-- ============ ВИКТОРИНА: НАСТРОЙКА ============ -->
   <section id="scr-quiz-setup" class="screen">
     <div class="topbar">
       <button class="icon-btn" onclick="show('scr-home')">←</button>
-      <div class="title">🏆 Викторина вдвоём</div>
+      <div class="title">🏆 <span data-i18n="quiz.title">Викторина вдвоём</span></div>
     </div>
 
-    <div class="q-label" style="margin-top:14px">Выберите тему</div>
+    <div class="q-label" style="margin-top:14px" data-i18n="chooseTopic">Выберите тему</div>
     <div class="chips" id="quizTopics"></div>
 
-    <p class="setup-note">Отвечайте вместе и зарабатывайте очки!<br>+100 за верный ответ · 🔥 бонус-вопрос с таймером даёт ×2</p>
-    <button class="btn" onclick="startQuiz()">Начать игру</button>
+    <p class="setup-note" data-i18n-html="quizSetupNote">Отвечайте вместе и зарабатывайте очки!<br>+100 за верный ответ · 🔥 бонус-вопрос с таймером даёт ×2</p>
+    <button class="btn" onclick="startQuiz()" data-i18n="startGame">Начать игру</button>
   </section>
 
   <!-- ============ ВИКТОРИНА: ИГРА ============ -->
@@ -523,7 +533,7 @@
     <div class="game-body">
       <div class="card q-card" style="padding-top:22px">
         <div id="qzBonusWrap" style="display:none">
-          <span class="bonus-tag">🔥 БОНУС ×2 — успейте за 15 секунд!</span>
+          <span class="bonus-tag" data-i18n="bonusTag">🔥 БОНУС ×2 — успейте за 15 секунд!</span>
           <div class="timer-bar"><i id="qzTimerFill"></i></div>
         </div>
         <div class="q-text" id="qzQuestion" style="margin-top:14px"></div>
@@ -531,7 +541,7 @@
 
       <div class="answers" id="qzAnswers"></div>
       <div class="verdict" id="qzVerdict"></div>
-      <button class="btn" id="qzNextBtn" style="display:none" onclick="quizNext()">Дальше →</button>
+      <button class="btn" id="qzNextBtn" style="display:none" onclick="quizNext()" data-i18n="next">Дальше →</button>
     </div>
   </section>
 
@@ -543,22 +553,22 @@
       <div class="r-sub" id="qzrSub"></div>
       <div class="r-score" id="qzrScore"></div>
     </div>
-    <div class="record-flash" id="qzrRecord" style="display:none">🎉 Новый рекорд пары!</div>
-    <button class="btn" onclick="goQuizSetup()">Сыграть ещё 🏆</button>
-    <button class="btn secondary" onclick="goHome()">На главную</button>
+    <div class="record-flash" id="qzrRecord" style="display:none" data-i18n="newRecord">🎉 Новый рекорд пары!</div>
+    <button class="btn" onclick="goQuizSetup()" data-i18n="playAgainQuiz">Сыграть ещё 🏆</button>
+    <button class="btn secondary" onclick="goHome()" data-i18n="toHome">На главную</button>
   </section>
 
   <!-- ============ МИНИ-КВЕСТ ДНЯ ============ -->
   <section id="scr-quest" class="screen">
     <div class="topbar">
       <button class="icon-btn" onclick="show('scr-home')">←</button>
-      <div class="title">🎯 Мини-квест дня</div>
+      <div class="title">🎯 <span data-i18n="quest.title">Мини-квест дня</span></div>
     </div>
 
     <div class="card prompt-card" id="questCard">
-      <div class="prompt-label">Квест дня</div>
+      <div class="prompt-label" data-i18n="quest.label">Квест дня</div>
       <div class="prompt-text" id="questText"></div>
-      <div class="prompt-hint">Сделайте это прямо сейчас, а потом жмите «Выполнено» 💫</div>
+      <div class="prompt-hint" data-i18n="quest.hint">Сделайте это прямо сейчас, а потом жмите «Выполнено» 💫</div>
     </div>
     <div class="prompt-count" id="questCount"></div>
     <button class="btn" id="questNextBtn" onclick="questNext()">Выполнено ✓</button>
@@ -586,8 +596,8 @@
       </div>
 
       <div class="judge-row">
-        <button class="j-no" onclick="phJudge(false)">✗ Не угадал(а)</button>
-        <button class="j-yes" onclick="phJudge(true)">✓ Угадал(а)!</button>
+        <button class="j-no" onclick="phJudge(false)" data-i18n="notGuessed">✗ Не угадал(а)</button>
+        <button class="j-yes" onclick="phJudge(true)" data-i18n="guessed">✓ Угадал(а)!</button>
       </div>
       <p class="setup-note" id="phJudgeHint"></p>
     </div>
@@ -602,12 +612,13 @@
       <div class="r-score" id="phrScore"></div>
     </div>
     <div class="stat-rows" id="phrRows"></div>
-    <button class="btn" onclick="startPhrase()">Сыграть ещё 💬</button>
-    <button class="btn secondary" onclick="goHome()">На главную</button>
+    <button class="btn" onclick="startPhrase()" data-i18n="playAgainPh">Сыграть ещё 💬</button>
+    <button class="btn secondary" onclick="goHome()" data-i18n="toHome">На главную</button>
   </section>
 
 </main>
 
+<script src="i18n.js"></script>
 <script>var KM_Q = [], QUIZ_Q = [], WHO_Q = [], QUEST_Q = [], PHRASE_Q = [];</script>
 <script src="questions-1.js"></script>
 <script src="questions-2.js"></script>
@@ -681,7 +692,101 @@ function shuffle(arr) {
 }
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-let activeGame = null; // 'km' | 'quiz' | null
+/* =================== ЯЗЫК =================== */
+
+const LANG_KEY = 'duet_lang';   // отдельно от S — чтобы savePair() не стирал выбор языка
+const LANGS = ['ru', 'en', 'uk'];
+const LANG_LOCALE = {ru: 'ru-RU', en: 'en-US', uk: 'uk-UA'};
+function detectLang() {
+  try { const v = localStorage.getItem(LANG_KEY); if (LANGS.includes(v)) return v; } catch(e) {}
+  const n = ((navigator.language || 'ru') + '').toLowerCase();
+  if (n.startsWith('uk')) return 'uk';
+  if (n.startsWith('ru')) return 'ru';
+  return 'en';
+}
+let LANG = detectLang();
+function t(key, vars) {
+  let str = I18N[LANG] && I18N[LANG][key];
+  if (str === undefined) str = I18N.ru[key];
+  if (str === undefined) return key;
+  if (vars) for (const k in vars) str = str.split('{' + k + '}').join(vars[k]);
+  return str;
+}
+function fmtNum(n) { return Number(n).toLocaleString(LANG_LOCALE[LANG]); }
+
+/* Русские вопросы — в KM_Q/QUIZ_Q/…; остальные языки — window.QL[lang] (файлы questions-N-xx.js, грузятся по требованию) */
+const langLoaded = {ru: true};
+const langLoading = {};
+function langReady() { return !!langLoaded[LANG]; }
+function loadLangData(lang) {
+  if (langLoaded[lang]) return Promise.resolve();
+  if (langLoading[lang]) return langLoading[lang];
+  langLoading[lang] = new Promise((resolve, reject) => {
+    const files = [1, 2, 3].map(n => 'questions-' + n + '-' + lang + '.js');
+    let left = files.length, failed = false;
+    files.forEach(f => {
+      const sc = document.createElement('script');
+      sc.src = f;
+      sc.async = false;   // порядок файлов сохраняется
+      sc.onload = () => { if (--left === 0 && !failed) { langLoaded[lang] = true; resolve(); } };
+      sc.onerror = () => {
+        if (failed) return;
+        failed = true;
+        if (window.QL) delete window.QL[lang];   // чтобы повторная загрузка не задвоила вопросы
+        delete langLoading[lang];
+        reject(new Error(f));
+      };
+      document.head.appendChild(sc);
+    });
+  });
+  return langLoading[lang];
+}
+function qpool(kind) { // kind: KM | QUIZ | QUEST | PHRASE
+  const ru = {KM: KM_Q, QUIZ: QUIZ_Q, QUEST: QUEST_Q, PHRASE: PHRASE_Q}[kind];
+  if (LANG === 'ru') return ru;
+  const l = window.QL && window.QL[LANG];
+  return (l && l[kind] && l[kind].length) ? l[kind] : ru;
+}
+function withData(fn) {
+  if (langReady()) { fn(); return; }
+  loadLangData(LANG).then(fn, fn);   // нет сети → играем на том, что есть (русские вопросы)
+}
+function applyLang() {
+  document.documentElement.lang = LANG;
+  document.title = t('docTitle');
+  const mt = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if (mt) mt.setAttribute('content', t('appTitle'));
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  $('langToggle').textContent = LANG.toUpperCase();
+  $('langToggle').setAttribute('aria-label', t('langAria'));
+  $('themeToggle').setAttribute('aria-label', t('themeAria'));
+}
+function setLang(lang) {
+  const apply = () => {
+    LANG = lang;
+    try { localStorage.setItem(LANG_KEY, lang); } catch(e) {}
+    applyLang();
+    if (S.p1.name && S.p2.name && !$('scr-onboard').classList.contains('active')) goHome();
+  };
+  if (langLoaded[lang]) { apply(); return; }
+  $('langToggle').textContent = '…';
+  loadLangData(lang).then(apply, () => {
+    $('langToggle').textContent = LANG.toUpperCase();
+    alert(t('langLoadFail'));
+  });
+}
+function cycleLang() {
+  if (activeGame) {
+    if (!confirm(t('switchConfirm'))) return;
+    stopQuizTimer();
+    activeGame = null;
+  }
+  setLang(LANGS[(LANGS.indexOf(LANG) + 1) % LANGS.length]);
+}
+
+let activeGame = null; // 'km' | 'quiz' | 'ph' | null
 
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -691,7 +796,7 @@ function show(id) {
 }
 function goHome() { renderHome(); show('scr-home'); }
 function quitGame() {
-  if (activeGame && !confirm('Прервать игру? Очки за неё не сохранятся.')) return;
+  if (activeGame && !confirm(t('quitConfirm'))) return;
   stopQuizTimer();
   goHome();
 }
@@ -816,7 +921,7 @@ function editPair() {
 }
 function savePair() {
   const n1 = $('name1').value.trim(), n2 = $('name2').value.trim();
-  if (!n1 || !n2) { alert('Введите оба имени 🙂'); return; }
+  if (!n1 || !n2) { alert(t('needNames')); return; }
   S.p1 = {name: n1, emoji: pick1, lvl: S.p1.lvl || 0, lvlPct: S.p1.lvlPct || 0};
   S.p2 = {name: n2, emoji: pick2, lvl: S.p2.lvl || 0, lvlPct: S.p2.lvlPct || 0};
   save();
@@ -829,17 +934,17 @@ function playerTag(p) { return `${p.emoji} ${esc(p.name)}`; }
 
 function renderHome() {
   $('pairChip').innerHTML = `${playerTag(S.p1)} <span class="amp">💜</span> ${playerTag(S.p2)}`;
-  $('homeScore').textContent = S.score.toLocaleString('ru-RU');
-  $('homeGames').textContent = 'игр сыграно: ' + S.games;
+  $('homeScore').textContent = fmtNum(S.score);
+  $('homeGames').textContent = t('gamesPlayed', {n: S.games});
   $('lvlP1h').textContent = S.p1.lvl;
   $('lvlP2h').textContent = S.p2.lvl;
   if (S.kmBest >= 0) {
     $('kmBestBadge').style.display = 'block';
-    $('kmBestBadge').textContent = `Лучший результат: ${S.kmBest}% совпадений`;
+    $('kmBestBadge').textContent = t('kmBest', {n: S.kmBest});
   }
   if (S.quizBest >= 0) {
     $('quizBestBadge').style.display = 'block';
-    $('quizBestBadge').textContent = `Рекорд: ${S.quizBest} очков`;
+    $('quizBestBadge').textContent = t('quizBest', {n: S.quizBest});
   }
 }
 
@@ -852,16 +957,18 @@ function goKmSetup() {
   $('kmDiffList').innerHTML = KM_DIFFS.map(d => `
     <div class="opt ${d.id === kmDiff ? 'sel' : ''}" onclick="setKmDiff('${d.id}')">
       <div class="o-emoji">${d.e}</div>
-      <div><div class="o-name">${d.n}</div><div class="o-sub">${d.s}</div></div>
+      <div><div class="o-name">${t('diff.' + d.id + '.n')}</div><div class="o-sub">${t('diff.' + d.id + '.s')}</div></div>
     </div>`).join('');
   show('scr-km-setup');
 }
 function setKmDiff(id) { kmDiff = id; goKmSetup(); }
 
-function startKm() {
-  const pool = kmDiff === 'mix' ? KM_Q.filter(q => q.d < 4)
-             : kmDiff === 'hot' ? KM_Q.filter(q => q.d === 4)
-             : KM_Q.filter(q => q.d === Number(kmDiff));
+function startKm() { withData(startKmNow); }
+function startKmNow() {
+  const src = qpool('KM');
+  const pool = kmDiff === 'mix' ? src.filter(q => q.d < 4)
+             : kmDiff === 'hot' ? src.filter(q => q.d === 4)
+             : src.filter(q => q.d === Number(kmDiff));
   km = {
     deck: shuffle(pool).slice(0, 10),
     i: 0,
@@ -886,16 +993,16 @@ function kmPlayers() {
 function renderKmRound() {
   const q = km.deck[km.i];
   const [ans, judge] = kmPlayers();
-  $('kmRound').textContent = `Раунд ${km.i + 1}/${km.deck.length}`;
+  $('kmRound').textContent = t('round', {i: km.i + 1, n: km.deck.length});
   $('kmProgress').style.width = ((km.i + 1) / km.deck.length * 100) + '%';
   $('kmScore').textContent = '⭐ ' + km.score;
   const tb = $('kmTurn');
   tb.className = 'turn-banner ' + (km.answerer === 0 ? 'rose' : 'violet');
-  tb.innerHTML = `Отвечает ${playerTag(ans)}`;
+  tb.innerHTML = t('answering', {tag: playerTag(ans)});
   $('kmAvatar').innerHTML = turnMascotSVG(km.answerer);
-  $('kmPts').textContent = `+${KM_PTS[q.d]} очков`;
+  $('kmPts').textContent = t('plusPts', {n: KM_PTS[q.d]});
   $('kmQuestion').textContent = q.t;
-  $('kmJudgeHint').innerHTML = `${playerTag(judge)}, честно оцени ответ 😉`;
+  $('kmJudgeHint').innerHTML = t('kmJudgeHint', {tag: playerTag(judge)});
 }
 
 let kmLock = false;
@@ -930,11 +1037,8 @@ function kmJudge(ok) {
 }
 
 function kmTitle(p) {
-  if (p >= 90) return ['🔮', 'Вы — телепаты!', 'Кажется, вы читаете мысли друг друга.'];
-  if (p >= 70) return ['💞', 'Родственные души', 'Вы отлично чувствуете друг друга!'];
-  if (p >= 50) return ['🤝', 'Крепкая команда', 'Хорошая база — а дальше только интереснее.'];
-  if (p >= 30) return ['🌱', 'Всё впереди!', 'Столько всего ещё предстоит узнать друг о друге.'];
-  return ['🚀', 'Начало пути', 'Играйте чаще — и удивляйтесь открытиям!'];
+  const i = p >= 90 ? 0 : p >= 70 ? 1 : p >= 50 ? 2 : p >= 30 ? 3 : 4;
+  return [['🔮', '💞', '🤝', '🌱', '🚀'][i], t('kmT.' + i + '.t'), t('kmT.' + i + '.s')];
 }
 
 function finishKm() {
@@ -943,12 +1047,12 @@ function finishKm() {
   const [e, title, sub] = kmTitle(pct);
   $('kmrEmoji').textContent = e;
   $('kmrTitle').textContent = title;
-  $('kmrSub').textContent = sub + ` Вы совпали в ${km.correct} из ${km.deck.length} ответов.`;
-  $('kmrScore').textContent = '+' + km.score + ' очков';
+  $('kmrSub').textContent = t('kmResultSub', {sub: sub, c: km.correct, n: km.deck.length});
+  $('kmrScore').textContent = t('plusPts', {n: km.score});
   $('kmrRows').innerHTML = `
-    <div class="stat-row"><span>Совпадения пары</span><span class="sr-val">${pct}%</span></div>
-    <div class="stat-row"><span>${playerTag(S.p1)} знает половинку</span><span class="sr-val">${km.per[0]}/${km.perTotal[0]}</span></div>
-    <div class="stat-row"><span>${playerTag(S.p2)} знает половинку</span><span class="sr-val">${km.per[1]}/${km.perTotal[1]}</span></div>`;
+    <div class="stat-row"><span>${t('matchPct')}</span><span class="sr-val">${pct}%</span></div>
+    <div class="stat-row"><span>${t('knows', {tag: playerTag(S.p1)})}</span><span class="sr-val">${km.per[0]}/${km.perTotal[0]}</span></div>
+    <div class="stat-row"><span>${t('knows', {tag: playerTag(S.p2)})}</span><span class="sr-val">${km.per[1]}/${km.perTotal[1]}</span></div>`;
   S.score += km.score;
   S.games++;
   if (pct > S.kmBest) S.kmBest = pct;
@@ -974,15 +1078,17 @@ let qz = null;
 let qzTimer = null;
 
 function goQuizSetup() {
-  $('quizTopics').innerHTML = QUIZ_TOPICS.map(t =>
-    `<button class="chip ${t.id === quizTopic ? 'sel' : ''}" onclick="setQuizTopic('${t.id}')">${t.e} ${t.n}</button>`
+  $('quizTopics').innerHTML = QUIZ_TOPICS.map(tp =>
+    `<button class="chip ${tp.id === quizTopic ? 'sel' : ''}" onclick="setQuizTopic('${tp.id}')">${tp.e} ${t('topic.' + tp.id)}</button>`
   ).join('');
   show('scr-quiz-setup');
 }
 function setQuizTopic(id) { quizTopic = id; goQuizSetup(); }
 
-function startQuiz() {
-  const pool = quizTopic === 'mix' ? QUIZ_Q : QUIZ_Q.filter(q => q.t === quizTopic);
+function startQuiz() { withData(startQuizNow); }
+function startQuizNow() {
+  const src = qpool('QUIZ');
+  const pool = quizTopic === 'mix' ? src : src.filter(q => q.t === quizTopic);
   const deck = shuffle(pool).slice(0, 10);
   const bonusCount = Math.max(2, Math.round(deck.length * 0.3));
   const bonusIdx = new Set(shuffle(deck.map((_, i) => i)).slice(0, bonusCount));
@@ -996,7 +1102,7 @@ function renderQuizRound() {
   const q = qz.deck[qz.i];
   const bonus = qz.bonusIdx.has(qz.i);
   qz.locked = false;
-  $('qzRound').textContent = `Вопрос ${qz.i + 1}/${qz.deck.length}`;
+  $('qzRound').textContent = t('question', {i: qz.i + 1, n: qz.deck.length});
   $('qzProgress').style.width = ((qz.i + 1) / qz.deck.length * 100) + '%';
   $('qzScore').textContent = '⭐ ' + qz.score;
   $('qzQuestion').textContent = q.q;
@@ -1051,11 +1157,11 @@ function quizAnswer(btn) {
     qz.score += pts;
     qz.correct++;
     $('qzScore').textContent = '⭐ ' + qz.score;
-    $('qzVerdict').textContent = bonus ? `Огонь! +${pts} 🔥` : `Верно! +${pts} 🎉`;
+    $('qzVerdict').textContent = bonus ? t('okBonus', {n: pts}) : t('ok', {n: pts});
     $('qzVerdict').style.color = 'var(--green)';
     floatPts('+' + pts);
   } else {
-    $('qzVerdict').textContent = 'Мимо! Но вы всё равно классные 💜';
+    $('qzVerdict').textContent = t('bad');
     $('qzVerdict').style.color = 'var(--red)';
   }
   $('qzNextBtn').style.display = 'block';
@@ -1070,7 +1176,7 @@ function quizTimeout() {
     if (b.dataset.ok === '1') b.classList.add('correct');
     else b.classList.add('dim');
   });
-  $('qzVerdict').textContent = 'Время вышло! ⏰';
+  $('qzVerdict').textContent = t('timeout');
   $('qzVerdict').style.color = 'var(--red)';
   $('qzNextBtn').style.display = 'block';
 }
@@ -1082,10 +1188,8 @@ function quizNext() {
 }
 
 function quizTitle(p) {
-  if (p >= 90) return ['🧠', 'Гении вдвоём!', 'Вашей эрудиции можно только позавидовать.'];
-  if (p >= 70) return ['✨', 'Блестящая пара', 'Вместе вы почти непобедимы!'];
-  if (p >= 50) return ['💪', 'Крепкий дуэт', 'Отличная командная работа.'];
-  return ['💜', 'Главное — вместе', 'Очки — ерунда, зато весело!'];
+  const i = p >= 90 ? 0 : p >= 70 ? 1 : p >= 50 ? 2 : 3;
+  return [['🧠', '✨', '💪', '💜'][i], t('quizT.' + i + '.t'), t('quizT.' + i + '.s')];
 }
 
 function finishQuiz() {
@@ -1095,8 +1199,8 @@ function finishQuiz() {
   const [e, title, sub] = quizTitle(pct);
   $('qzrEmoji').textContent = e;
   $('qzrTitle').textContent = title;
-  $('qzrSub').textContent = `${sub} Верных ответов: ${qz.correct} из ${qz.deck.length}.`;
-  $('qzrScore').textContent = '+' + qz.score + ' очков';
+  $('qzrSub').textContent = t('quizSub', {sub: sub, c: qz.correct, n: qz.deck.length});
+  $('qzrScore').textContent = t('plusPts', {n: qz.score});
   const isRecord = qz.score > S.quizBest && S.quizBest >= 0;
   $('qzrRecord').style.display = isRecord ? 'block' : 'none';
   S.score += qz.score;
@@ -1111,15 +1215,16 @@ function finishQuiz() {
 
 let quest = null;
 
-function startQuest() {
-  quest = { deck: shuffle(QUEST_Q).slice(0, QUEST_ROUNDS), i: 0 };
+function startQuest() { withData(startQuestNow); }
+function startQuestNow() {
+  quest = { deck: shuffle(qpool('QUEST')).slice(0, QUEST_ROUNDS), i: 0 };
   renderQuest();
   show('scr-quest');
 }
 function renderQuest() {
   $('questText').textContent = quest.deck[quest.i];
-  $('questCount').textContent = `${quest.i + 1} из ${quest.deck.length}`;
-  $('questNextBtn').textContent = quest.i === quest.deck.length - 1 ? 'Завершить 🎉' : 'Выполнено ✓';
+  $('questCount').textContent = t('countOf', {i: quest.i + 1, n: quest.deck.length});
+  $('questNextBtn').textContent = quest.i === quest.deck.length - 1 ? t('finish') : t('done');
 }
 function questNext() {
   quest.i++;
@@ -1135,9 +1240,10 @@ function questNext() {
 
 let ph = null;
 
-function startPhrase() {
+function startPhrase() { withData(startPhraseNow); }
+function startPhraseNow() {
   ph = {
-    deck: shuffle(PHRASE_Q).slice(0, 10),
+    deck: shuffle(qpool('PHRASE')).slice(0, 10),
     i: 0,
     answerer: Math.random() < .5 ? 0 : 1, // 0 = p1, 1 = p2 — кто угадывает вслух
     correct: 0,
@@ -1159,17 +1265,17 @@ function phPlayers() {
 
 function renderPhraseRound() {
   const [guesser, subject] = phPlayers();
-  $('phRound').textContent = `Раунд ${ph.i + 1}/${ph.deck.length}`;
+  $('phRound').textContent = t('round', {i: ph.i + 1, n: ph.deck.length});
   $('phProgress').style.width = ((ph.i + 1) / ph.deck.length * 100) + '%';
   $('phScore').textContent = '⭐ ' + ph.score;
   const tb = $('phTurn');
   tb.className = 'turn-banner ' + (ph.answerer === 0 ? 'rose' : 'violet');
-  tb.innerHTML = `Угадывает ${playerTag(guesser)}`;
+  tb.innerHTML = t('ph.guessing', {tag: playerTag(guesser)});
   $('phAvatar').innerHTML = turnMascotSVG(ph.answerer);
-  $('phSubjectLabel').textContent = `${subject.name}: угадываем фразу`;
+  $('phSubjectLabel').innerHTML = t('ph.subject', {name: esc(subject.name)});
   $('phQuestion').textContent = ph.deck[ph.i];
-  $('phHint').textContent = `${playerTag(guesser)}, закончи фразу вслух — как думаешь, что скажет ${subject.name}?`;
-  $('phJudgeHint').innerHTML = `${playerTag(subject)}, честно оцени: угадал(а) ли партнёр?`;
+  $('phHint').innerHTML = t('ph.hint', {tag: playerTag(guesser), name: esc(subject.name)});
+  $('phJudgeHint').innerHTML = t('ph.judgeHint', {tag: playerTag(subject)});
 }
 
 let phLock = false;
@@ -1202,10 +1308,8 @@ function phJudge(ok) {
 }
 
 function phraseTitle(p) {
-  if (p >= 90) return ['💫', 'Вы на одной волне!', 'Кажется, вы читаете мысли друг друга.'];
-  if (p >= 70) return ['💬', 'Отлично чувствуете друг друга', 'Вы правда хорошо друг друга знаете!'];
-  if (p >= 50) return ['🤝', 'Неплохо!', 'Есть куда расти, и это только интереснее.'];
-  return ['🌱', 'Есть, что обсудить', 'Похоже, вам будет о чём поговорить после игры!'];
+  const i = p >= 90 ? 0 : p >= 70 ? 1 : p >= 50 ? 2 : 3;
+  return [['💫', '💬', '🤝', '🌱'][i], t('phT.' + i + '.t'), t('phT.' + i + '.s')];
 }
 
 function finishPhrase() {
@@ -1214,12 +1318,12 @@ function finishPhrase() {
   const [e, title, sub] = phraseTitle(pct);
   $('phrEmoji').textContent = e;
   $('phrTitle').textContent = title;
-  $('phrSub').textContent = sub + ` Угадано ${ph.correct} из ${ph.deck.length} фраз.`;
-  $('phrScore').textContent = '+' + ph.score + ' очков';
+  $('phrSub').textContent = t('phResultSub', {sub: sub, c: ph.correct, n: ph.deck.length});
+  $('phrScore').textContent = t('plusPts', {n: ph.score});
   $('phrRows').innerHTML = `
-    <div class="stat-row"><span>Совпадения пары</span><span class="sr-val">${pct}%</span></div>
-    <div class="stat-row"><span>${playerTag(S.p1)} угадывает половинку</span><span class="sr-val">${ph.per[0]}/${ph.perTotal[0]}</span></div>
-    <div class="stat-row"><span>${playerTag(S.p2)} угадывает половинку</span><span class="sr-val">${ph.per[1]}/${ph.perTotal[1]}</span></div>`;
+    <div class="stat-row"><span>${t('matchPct')}</span><span class="sr-val">${pct}%</span></div>
+    <div class="stat-row"><span>${t('phGuessRow', {tag: playerTag(S.p1)})}</span><span class="sr-val">${ph.per[0]}/${ph.perTotal[0]}</span></div>
+    <div class="stat-row"><span>${t('phGuessRow', {tag: playerTag(S.p2)})}</span><span class="sr-val">${ph.per[1]}/${ph.perTotal[1]}</span></div>`;
   S.score += ph.score;
   S.games++;
   addLevelProgress(S.p1, ph.per[0]);
@@ -1259,6 +1363,8 @@ function confetti() {
 /* =================== СТАРТ =================== */
 
 applyTheme(currentTheme);
+applyLang();
+if (LANG !== 'ru') loadLangData(LANG).catch(() => {});
 renderStars();
 renderMascots();
 renderEmojiRows();
