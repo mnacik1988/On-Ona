@@ -245,6 +245,52 @@
   /* ---------- маскоты ---------- */
   .mascots { display: flex; justify-content: center; align-items: flex-end; gap: 4px; position: relative; margin: 18px 0 8px; }
   .mascots svg { display: block; }
+  /* тап по привидению: обёртка .gt, чтобы не спорить с float и с отражением второго духа */
+  #mascot1, #mascot2, #mascot1h, #mascot2h { cursor: pointer; touch-action: manipulation; }
+  .gt { transform-origin: 50% 90%; will-change: transform; }
+  .poke-jelly .gt { animation: pokeJelly .75s var(--ease-soft); }
+  @keyframes pokeJelly {
+    0% { transform: scale(1, 1); }
+    18% { transform: scale(1.2, .76); }
+    42% { transform: translateY(-20px) scale(.9, 1.14); }
+    68% { transform: translateY(0) scale(1.08, .92); }
+    84% { transform: scale(.97, 1.03); }
+    100% { transform: scale(1, 1); }
+  }
+  .poke-spin .gt { animation: pokeSpin .85s var(--ease-soft); }
+  @keyframes pokeSpin {
+    0% { transform: translateY(0) rotate(0); }
+    45% { transform: translateY(-22px) rotate(200deg) scale(1.05); }
+    100% { transform: translateY(0) rotate(360deg); }
+  }
+  .poke-wiggle .gt { animation: pokeWiggle .8s ease; }
+  @keyframes pokeWiggle {
+    0%, 100% { transform: rotate(0); }
+    15% { transform: rotate(-16deg) scale(1.04); }
+    35% { transform: rotate(13deg); }
+    55% { transform: rotate(-9deg); }
+    75% { transform: rotate(5deg); }
+  }
+  .poke-boing .gt { animation: pokeBoing .9s var(--ease-soft); }
+  @keyframes pokeBoing {
+    0% { transform: translateY(0) scale(1); }
+    25% { transform: translateY(-26px) scale(1.06); }
+    45% { transform: translateY(0) scale(1.12, .86); }
+    62% { transform: translateY(-10px) scale(.96, 1.05); }
+    80% { transform: translateY(0) scale(1.04, .96); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  .poke-peek .gt { animation: pokePeek .6s var(--ease-soft); }
+  @keyframes pokePeek { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-8px) rotate(-4deg); } }
+  .poke-heart {
+    position: fixed; z-index: 55; pointer-events: none; font-size: 20px;
+    animation: pokeHeart 1.1s var(--ease-smooth) forwards;
+  }
+  @keyframes pokeHeart {
+    0% { opacity: 0; transform: translate(0, 0) scale(.4); }
+    20% { opacity: 1; transform: translate(calc(var(--dx) * .3), -18px) scale(1.1); }
+    100% { opacity: 0; transform: translate(var(--dx), -80px) scale(.9) rotate(var(--rot)); }
+  }
   .m1 { animation: float 3s ease-in-out infinite; }
   .m2 { animation: float 3s ease-in-out .6s infinite; }
   @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
@@ -962,9 +1008,65 @@ function mascotSVG(color, blushColor, flip, mood) {
 function renderMascots() {
   const m1 = mascotSVG('#FFA8C2', '#FF5C8A', false);
   const m2 = mascotSVG('#BCA6FF', '#7C5CFC', true);
-  ['mascot1','mascot1h'].forEach(id => { if ($(id)) $(id).innerHTML = m1; });
-  ['mascot2','mascot2h'].forEach(id => { if ($(id)) $(id).innerHTML = m2; });
+  ['mascot1','mascot1h'].forEach(id => { if ($(id)) $(id).innerHTML = '<div class="gt">' + m1 + '</div>'; });
+  ['mascot2','mascot2h'].forEach(id => { if ($(id)) $(id).innerHTML = '<div class="gt">' + m2 + '</div>'; });
 }
+
+/* тап по привидению — случайная весёлая реакция, радостная мордочка и сердечки;
+   второй дух в ответ чуть подпрыгивает */
+const POKES = ['poke-jelly', 'poke-spin', 'poke-wiggle', 'poke-boing'];
+const POKE_PAIR = {mascot1: 'mascot2', mascot2: 'mascot1', mascot1h: 'mascot2h', mascot2h: 'mascot1h'};
+let lastPoke = '';
+const pokeTimers = {};
+function replayClass(el, cls, ms) {
+  el.classList.remove(...POKES, 'poke-peek');
+  void el.offsetWidth;   // перезапуск анимации при частых тапах
+  el.classList.add(cls);
+  clearTimeout(pokeTimers[el.id + cls]);
+  pokeTimers[el.id + cls] = setTimeout(() => el.classList.remove(cls), ms);
+}
+function pokeGhost(id) {
+  const el = $(id);
+  if (!el) return;
+  const first = id.startsWith('mascot1');
+  const choices = POKES.filter(p => p !== lastPoke);
+  const anim = choices[Math.floor(Math.random() * choices.length)];
+  lastPoke = anim;
+  replayClass(el, anim, 950);
+  // радостная мордочка
+  const gt = el.querySelector('.gt');
+  if (gt) {
+    gt.innerHTML = first ? mascotSVG('#FFA8C2', '#FF5C8A', false, 'happy') : mascotSVG('#BCA6FF', '#7C5CFC', true, 'happy');
+    clearTimeout(pokeTimers[id + 'face']);
+    pokeTimers[id + 'face'] = setTimeout(() => {
+      gt.innerHTML = first ? mascotSVG('#FFA8C2', '#FF5C8A', false) : mascotSVG('#BCA6FF', '#7C5CFC', true);
+    }, 1200);
+  }
+  // сердечки
+  const r = el.getBoundingClientRect();
+  const icons = first ? ['💗', '💖', '✨', '💕'] : ['💜', '💫', '✨', '💜'];
+  for (let i = 0; i < 5; i++) {
+    const h = document.createElement('div');
+    h.className = 'poke-heart';
+    h.textContent = icons[i % icons.length];
+    h.style.left = (r.left + r.width / 2 - 10 + (Math.random() * 30 - 15)) + 'px';
+    h.style.top = (r.top - 14) + 'px';   // над головой, чтобы не закрывать мордочку
+    h.style.setProperty('--dx', (Math.random() * 90 - 45).toFixed(0) + 'px');
+    h.style.setProperty('--rot', (Math.random() * 60 - 30).toFixed(0) + 'deg');
+    h.style.animationDelay = (i * 0.07) + 's';
+    h.style.fontSize = (14 + Math.random() * 10).toFixed(0) + 'px';
+    document.body.appendChild(h);
+    setTimeout(() => h.remove(), 1500);
+  }
+  // партнёр отзывается
+  const partner = $(POKE_PAIR[id]);
+  if (partner) setTimeout(() => replayClass(partner, 'poke-peek', 650), 180);
+  if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.isActive)) { try { navigator.vibrate(12); } catch(e) {} }
+}
+['mascot1', 'mascot2', 'mascot1h', 'mascot2h'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', () => pokeGhost(id));
+});
 function turnMascotSVG(playerIdx, mood) {
   return playerIdx === 0 ? mascotSVG('#FFA8C2', '#FF5C8A', false, mood) : mascotSVG('#BCA6FF', '#7C5CFC', true, mood);
 }
