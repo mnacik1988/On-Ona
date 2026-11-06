@@ -196,7 +196,7 @@
   .theme-toggle:active { transform: scale(.9); }
   .lang-wrap { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 66px; z-index: 40; }
   .lang-toggle {
-    min-width: 42px; height: 42px; padding: 0 12px; border-radius: 999px; border: none; cursor: pointer;
+    min-width: 42px; height: 42px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--violet); cursor: pointer;
     background: var(--card); box-shadow: var(--shadow); color: var(--ink);
     font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: .5px;
     display: flex; align-items: center; justify-content: center;
@@ -215,7 +215,10 @@
     font-family: inherit; font-size: 15px; font-weight: 700;
   }
   .lang-menu button span { font-size: 20px; }
-  .lang-menu button.sel { background: var(--violet-soft); color: var(--violet-deep); }
+  .lang-menu button .chk { margin-left: auto; font-style: normal; font-weight: 800; visibility: hidden; }
+  .lang-menu button.sel { background: var(--violet); color: #fff; }
+  .lang-menu button.sel .chk { visibility: visible; }
+  .lt-flag { font-size: 18px; margin-right: 6px; }
   .icon-btn:active { transform: scale(.9); }
   .topbar .title { font-family: var(--font-display); font-size: 19px; font-weight: 600; }
   .spacer { flex: 1; }
@@ -404,9 +407,9 @@
 <div class="lang-wrap" id="langWrap">
   <button class="lang-toggle" id="langToggle" onclick="toggleLangMenu(event)" aria-haspopup="true" aria-expanded="false" aria-label="Сменить язык">RU ▾</button>
   <div class="lang-menu" id="langMenu" role="menu">
-    <button type="button" data-lang="ru" onclick="pickLang('ru')"><span>🇷🇺</span>Русский</button>
-    <button type="button" data-lang="en" onclick="pickLang('en')"><span>🇬🇧</span>English</button>
-    <button type="button" data-lang="uk" onclick="pickLang('uk')"><span>🇺🇦</span>Українська</button>
+    <button type="button" data-lang="ru" onclick="pickLang('ru')"><span>🇷🇺</span>Русский<i class="chk">✓</i></button>
+    <button type="button" data-lang="en" onclick="pickLang('en')"><span>🇬🇧</span>English<i class="chk">✓</i></button>
+    <button type="button" data-lang="uk" onclick="pickLang('uk')"><span>🇺🇦</span>Українська<i class="chk">✓</i></button>
   </div>
 </div>
 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Переключить тему">🌙</button>
@@ -747,6 +750,7 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s; re
 
 const LANG_KEY = 'duet_lang';   // отдельно от S — чтобы savePair() не стирал выбор языка
 const LANGS = ['ru', 'en', 'uk'];
+const LANG_FLAG = {ru: '🇷🇺', en: '🇬🇧', uk: '🇺🇦'};
 const LANG_LOCALE = {ru: 'ru-RU', en: 'en-US', uk: 'uk-UA'};
 function detectLang() {
   try { const v = localStorage.getItem(LANG_KEY); if (LANGS.includes(v)) return v; } catch(e) {}
@@ -810,7 +814,7 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
-  $('langToggle').textContent = LANG.toUpperCase() + ' ▾';
+  $('langToggle').innerHTML = '<span class="lt-flag">' + LANG_FLAG[LANG] + '</span>' + LANG.toUpperCase() + ' ▾';
   $('langToggle').setAttribute('aria-label', t('langAria'));
   document.querySelectorAll('#langMenu button').forEach(b => b.classList.toggle('sel', b.dataset.lang === LANG));
   $('themeToggle').setAttribute('aria-label', t('themeAria'));
@@ -825,7 +829,7 @@ function setLang(lang) {
   if (langLoaded[lang]) { apply(); return; }
   $('langToggle').textContent = '…';
   loadLangData(lang).then(apply, () => {
-    $('langToggle').textContent = LANG.toUpperCase() + ' ▾';
+    $('langToggle').innerHTML = '<span class="lt-flag">' + LANG_FLAG[LANG] + '</span>' + LANG.toUpperCase() + ' ▾';
     alert(t('langLoadFail'));
   });
 }
