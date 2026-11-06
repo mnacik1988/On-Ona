@@ -188,12 +188,31 @@
   }
   .theme-toggle {
     position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 16px; z-index: 40;
-    width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer;
-    background: var(--card); box-shadow: var(--shadow);
-    font-size: 18px; display: flex; align-items: center; justify-content: center;
-    transition: transform .2s var(--ease-soft), background-color .35s ease;
+    width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--violet); cursor: pointer;
+    background: var(--card); box-shadow: var(--shadow); padding: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .2s var(--ease-soft), background-color .35s ease, box-shadow .4s ease, border-color .4s ease;
   }
   .theme-toggle:active { transform: scale(.9); }
+  :root[data-theme="dark"] .theme-toggle {
+    border-color: #FFB020;
+    box-shadow: 0 0 14px rgba(255, 176, 32, .45), var(--shadow);
+  }
+  /* иконка: солнце (в тёмной теме) и месяц (в светлой) сменяют друг друга с поворотом */
+  .ti { position: absolute; width: 26px; height: 26px; transition: transform .6s var(--ease-soft), opacity .35s ease; }
+  .ti-sun { opacity: 0; transform: rotate(-120deg) scale(.3); }
+  .ti-moon { opacity: 1; transform: none; }
+  :root[data-theme="dark"] .ti-sun { opacity: 1; transform: none; }
+  :root[data-theme="dark"] .ti-moon { opacity: 0; transform: rotate(120deg) scale(.3); }
+  .ti-rays { transform-origin: 12px 12px; animation: tiSpin 14s linear infinite; }
+  @keyframes tiSpin { to { transform: rotate(360deg); } }
+  .ti-core { transform-origin: 12px 12px; animation: tiPulse 3s ease-in-out infinite; }
+  @keyframes tiPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  .ti-star { transform-box: fill-box; transform-origin: center; animation: tiTwinkle 2.4s ease-in-out infinite; }
+  .ti-star.s2 { animation-delay: 1.2s; }
+  @keyframes tiTwinkle { 0%, 100% { opacity: .25; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.1); } }
+  .ti-moon-body { transform-origin: 12px 12px; animation: tiRock 5s ease-in-out infinite; }
+  @keyframes tiRock { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
   .lang-wrap { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 66px; z-index: 40; }
   .lang-toggle {
     min-width: 42px; height: 42px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--violet); cursor: pointer;
@@ -412,7 +431,36 @@
     <button type="button" data-lang="uk" onclick="pickLang('uk')"><span>🇺🇦</span>Українська<i class="chk">✓</i></button>
   </div>
 </div>
-<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Переключить тему">🌙</button>
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Переключить тему">
+  <svg class="ti ti-sun" viewBox="0 0 24 24" aria-hidden="true">
+    <defs>
+      <radialGradient id="tiSunG" cx="40%" cy="38%" r="70%">
+        <stop offset="0" stop-color="#FFF6B0"/><stop offset=".55" stop-color="#FFC93C"/><stop offset="1" stop-color="#FF8A3D"/>
+      </radialGradient>
+    </defs>
+    <g class="ti-rays" stroke="#FFB020" stroke-width="2" stroke-linecap="round">
+      <line x1="12" y1="1.8" x2="12" y2="4.4"/><line x1="12" y1="19.6" x2="12" y2="22.2"/>
+      <line x1="1.8" y1="12" x2="4.4" y2="12"/><line x1="19.6" y1="12" x2="22.2" y2="12"/>
+      <line x1="4.8" y1="4.8" x2="6.6" y2="6.6"/><line x1="17.4" y1="17.4" x2="19.2" y2="19.2"/>
+      <line x1="4.8" y1="19.2" x2="6.6" y2="17.4"/><line x1="17.4" y1="6.6" x2="19.2" y2="4.8"/>
+    </g>
+    <g class="ti-core">
+      <circle cx="12" cy="12" r="5.6" fill="url(#tiSunG)"/>
+      <circle cx="10.1" cy="11.3" r=".75" fill="#7A3E00"/><circle cx="13.9" cy="11.3" r=".75" fill="#7A3E00"/>
+      <path d="M10.3 13.4 Q12 14.9 13.7 13.4" stroke="#7A3E00" stroke-width=".8" fill="none" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <svg class="ti ti-moon" viewBox="0 0 24 24" aria-hidden="true">
+    <defs>
+      <linearGradient id="tiMoonG" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#B9A4FF"/><stop offset="1" stop-color="#6647E8"/>
+      </linearGradient>
+    </defs>
+    <path class="ti-moon-body" d="M15.6 3.4A8.6 8.6 0 1 0 20.6 16 7 7 0 0 1 15.6 3.4Z" fill="url(#tiMoonG)"/>
+    <path class="ti-star" d="M19 3.2l.55 1.25 1.25.55-1.25.55L19 6.8l-.55-1.25L17.2 5l1.25-.55Z" fill="#FFB020"/>
+    <path class="ti-star s2" d="M21 9.6l.35.8.8.35-.8.35-.35.8-.35-.8-.8-.35.8-.35Z" fill="#FF5C8A"/>
+  </svg>
+</button>
 <main>
 
   <!-- ============ ОНБОРДИНГ ============ -->
@@ -959,7 +1007,6 @@ let currentTheme = loadTheme();
 function applyTheme(theme) {
   currentTheme = theme;
   document.documentElement.setAttribute('data-theme', theme);
-  $('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
   const metaTheme = document.querySelector('meta[name="theme-color"]');
   if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#150F26' : '#FFEFF4');
   try { localStorage.setItem(THEME_KEY, theme); } catch(e) {}
