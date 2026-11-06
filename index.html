@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Boo &amp; Boo">
 <meta name="theme-color" content="#FFEFF4">
 <title>Boo &amp; Boo — игра для двоих</title>
@@ -64,7 +64,9 @@
     --shadow: 0 8px 24px rgba(0, 0, 0, .4);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; }
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  html { background: #FFF0F5; }
+  html[data-theme="dark"] { background: #150F26; }
   body {
     background: var(--bg-gradient) fixed;
     color: var(--ink);
@@ -79,11 +81,19 @@
     margin: 0 auto;
     padding: calc(60px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom));
     position: relative;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
   }
+  /* верхняя «шапка» под статус-баром iOS (в светлой теме — фирменный градиент, чтобы белое время читалось) */
+  .status-cap {
+    position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top);
+    z-index: 60; pointer-events: none;
+    background: linear-gradient(90deg, var(--rose), var(--violet));
+  }
+  :root[data-theme="dark"] .status-cap { background: transparent; }
 
   /* ---------- декор фона ---------- */
   .bg-decor { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
@@ -105,7 +115,23 @@
 
   /* ---------- экраны ---------- */
   .screen { display: none; position: relative; z-index: 1; }
-  .screen.active { display: flex; flex-direction: column; flex: 1 1 auto; animation: pop .5s var(--ease-smooth); }
+  .screen.active {
+    display: flex; flex-direction: column; flex: 1 1 auto; animation: pop .5s var(--ease-smooth);
+    min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    margin: 0 -20px; padding: 0 20px 8px;   /* чтобы тени карточек не обрезались */
+  }
+  .screen.active::-webkit-scrollbar, .home-scroll::-webkit-scrollbar { display: none; }
+  /* главная: духи, уровни и очки неподвижны, прокручиваются только режимы */
+  #scr-home.active { overflow: hidden; }
+  .home-head { flex: 0 0 auto; }
+  .home-scroll {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    margin: 0 -20px; padding: 0 20px 28px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 26px), transparent);
+  }
   @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
   .game-body { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
   .turn-avatar { display: flex; justify-content: center; margin: 16px 0 6px; }
@@ -168,8 +194,8 @@
     transition: transform .2s var(--ease-soft), background-color .35s ease;
   }
   .theme-toggle:active { transform: scale(.9); }
+  .lang-wrap { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 66px; z-index: 40; }
   .lang-toggle {
-    position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 66px; z-index: 40;
     min-width: 42px; height: 42px; padding: 0 12px; border-radius: 999px; border: none; cursor: pointer;
     background: var(--card); box-shadow: var(--shadow); color: var(--ink);
     font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: .5px;
@@ -177,6 +203,19 @@
     transition: transform .2s var(--ease-soft), background-color .35s ease;
   }
   .lang-toggle:active { transform: scale(.9); }
+  .lang-menu {
+    display: none; position: absolute; top: 50px; right: 0; min-width: 176px; padding: 6px;
+    background: var(--card); border-radius: 18px; box-shadow: 0 12px 32px rgba(40, 20, 80, .28);
+    border: 1px solid var(--border-soft);
+  }
+  .lang-menu.open { display: block; animation: pop .25s var(--ease-smooth); }
+  .lang-menu button {
+    display: flex; align-items: center; gap: 10px; width: 100%; border: none; cursor: pointer;
+    background: none; color: var(--ink); text-align: left; border-radius: 12px; padding: 11px 12px;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+  }
+  .lang-menu button span { font-size: 20px; }
+  .lang-menu button.sel { background: var(--violet-soft); color: var(--violet-deep); }
   .icon-btn:active { transform: scale(.9); }
   .topbar .title { font-family: var(--font-display); font-size: 19px; font-weight: 600; }
   .spacer { flex: 1; }
@@ -361,7 +400,15 @@
 <body>
 <div class="bg-decor" id="bgDecor"></div>
 <div class="star-field" id="starField"></div>
-<button class="lang-toggle" id="langToggle" onclick="cycleLang()" aria-label="Сменить язык">RU</button>
+<div class="status-cap"></div>
+<div class="lang-wrap" id="langWrap">
+  <button class="lang-toggle" id="langToggle" onclick="toggleLangMenu(event)" aria-haspopup="true" aria-expanded="false" aria-label="Сменить язык">RU ▾</button>
+  <div class="lang-menu" id="langMenu" role="menu">
+    <button type="button" data-lang="ru" onclick="pickLang('ru')"><span>🇷🇺</span>Русский</button>
+    <button type="button" data-lang="en" onclick="pickLang('en')"><span>🇬🇧</span>English</button>
+    <button type="button" data-lang="uk" onclick="pickLang('uk')"><span>🇺🇦</span>Українська</button>
+  </div>
+</div>
 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Переключить тему">🌙</button>
 <main>
 
@@ -392,6 +439,7 @@
 
   <!-- ============ ГЛАВНАЯ ============ -->
   <section id="scr-home" class="screen">
+    <div class="home-head">
     <div class="mascots" style="margin-top:4px">
       <div class="lvl-badge lvl-p1" id="lvlP1h">0</div>
       <div class="m1" id="mascot1h"></div>
@@ -406,6 +454,8 @@
       <div class="sb-value" id="homeScore">0</div>
       <div class="sb-sub" id="homeGames">игр сыграно: 0</div>
     </div>
+    </div>
+    <div class="home-scroll">
 
     <div class="card mode-card" onclick="goKmSetup()">
       <div class="mode-icon" style="background:var(--rose-soft)">💗</div>
@@ -447,6 +497,7 @@
 
     <button class="link-btn" onclick="editPair()" data-i18n="editNames">✏️ Изменить имена</button>
     <p class="footer-note" data-i18n="footer">Сделано с 💜 для двоих</p>
+    </div>
   </section>
 
   <!-- ============ УЗНАЙ МЕНЯ: НАСТРОЙКА ============ -->
@@ -759,8 +810,9 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
-  $('langToggle').textContent = LANG.toUpperCase();
+  $('langToggle').textContent = LANG.toUpperCase() + ' ▾';
   $('langToggle').setAttribute('aria-label', t('langAria'));
+  document.querySelectorAll('#langMenu button').forEach(b => b.classList.toggle('sel', b.dataset.lang === LANG));
   $('themeToggle').setAttribute('aria-label', t('themeAria'));
 }
 function setLang(lang) {
@@ -773,17 +825,30 @@ function setLang(lang) {
   if (langLoaded[lang]) { apply(); return; }
   $('langToggle').textContent = '…';
   loadLangData(lang).then(apply, () => {
-    $('langToggle').textContent = LANG.toUpperCase();
+    $('langToggle').textContent = LANG.toUpperCase() + ' ▾';
     alert(t('langLoadFail'));
   });
 }
-function cycleLang() {
+function toggleLangMenu(e) {
+  e.stopPropagation();
+  const open = !$('langMenu').classList.contains('open');
+  $('langMenu').classList.toggle('open', open);
+  $('langToggle').setAttribute('aria-expanded', open);
+}
+function closeLangMenu() {
+  $('langMenu').classList.remove('open');
+  $('langToggle').setAttribute('aria-expanded', 'false');
+}
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#langWrap')) closeLangMenu(); });
+function pickLang(lang) {
+  closeLangMenu();
+  if (lang === LANG) return;
   if (activeGame) {
     if (!confirm(t('switchConfirm'))) return;
     stopQuizTimer();
     activeGame = null;
   }
-  setLang(LANGS[(LANGS.indexOf(LANG) + 1) % LANGS.length]);
+  setLang(lang);
 }
 
 let activeGame = null; // 'km' | 'quiz' | 'ph' | null
@@ -792,6 +857,9 @@ function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
   window.scrollTo(0, 0);
+  $(id).scrollTop = 0;
+  const hs = $(id).querySelector('.home-scroll');
+  if (hs) hs.scrollTop = 0;
   if (id === 'scr-home' || id === 'scr-onboard') activeGame = null;
 }
 function goHome() { renderHome(); show('scr-home'); }
